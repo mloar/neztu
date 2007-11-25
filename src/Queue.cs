@@ -1,14 +1,17 @@
-using System;
+using System.Collections;
 
 namespace Neztu
 {
   public interface IQueueManager
   {
-    void AddVote(uint UserId, uint TrackId);
-    void RemoveVote(uint UserId, uint TrackId);
+    Vote[] GetPlayOrder(Vote[] votes);
+  }
 
-    uint[] GetQueue();
-
-    uint PlayNext();
+  public class RoundRobinQueue : IQueueManager
+  {
+    public Vote[] GetPlayOrder(Vote[] votes)
+    {
+      return null;
+    }
   }
 }

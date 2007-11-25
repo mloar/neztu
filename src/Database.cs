@@ -1,38 +1,44 @@
+using System;
+using System.Data;
+
 namespace Neztu
 {
-  struct Track
+  public struct Track
   {
-    uint TrackId;
-    string Filename;
-    string Title;
-    string Artist;
-    string Album;
-    uint DiscNumber;
-    uint TrackNumber;
-    uint UserId;
+    public Guid TrackId;
+    public string Filename;
+    public string Title;
+    public string Artist;
+    public string Album;
+    public uint DiscNumber;
+    public uint TrackNumber;
+    public TimeSpan Length;
+    public Guid UserId;
   }
 
-  struct User
+  public struct Vote
   {
-    uint UserId;
-    string Username;
+    public Guid UserId;
+    public Guid TrackId;
+    public DateTime Timestamp;
   }
 
-  interface TrackDatabase
+  interface ITrackDatabase
   {
-    Track GetTrack(uint trackId);
+    Track GetTrack(Guid trackId);
     Track[] GetTracks(string title, string artist, string album);
+    Track[] GetAll();
+    DataView GetViewofAll();
 
-    uint AddTrack(Track newTrack);
-    void RemoveTrack(uint trackId);
+    Guid AddTrack(Track newTrack);
+    void RemoveTrack(Guid trackId);
   }
 
-  interface UserDatabase
+  interface IVoteDatabase
   {
-    User GetUser(uint userId);
-    User GetUser(string username);
+    Vote[] GetVotesByUser(Guid userId);
+    Vote[] GetAll();
 
-    uint AddUser(User newUser);
-    void RemoveUser(uint userId);
+    void AddVote(Guid userId, Guid trackId);
   }
 }
