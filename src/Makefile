@@ -2,7 +2,10 @@ Neztu.dll: *.cs libs/taglib-sharp/src/taglib-sharp.dll
 	MONO_PATH=libs/taglib-sharp/src gmcs -out:$@ -t:library -r:System.Configuration -r:System.Data -r:System.Web -r:Npgsql -r:taglib-sharp *.cs
 
 TagReader.exe: TagReader.cs Database.cs PostgresBackend.cs
-	gmcs -out:$@ -t:exe -debug:full -r:System.Configuration -r:Npgsql -r:taglib-sharp $^
+	MONO_PATH=libs/taglib-sharp/src gmcs -out:$@ -t:exe -debug:full -r:System.Configuration -r:System.Data -r:Npgsql -r:taglib-sharp $^
+
+Daemon.exe: Daemon.cs Database.cs PostgresBackend.cs Scheduler.cs
+	gmcs -out:$@ -t:exe -debug:full -r:System.Configuration -r:System.Data -r:Npgsql $^
 
 libs/PgProviders/PostgreSQLProviders.dll: libs/PgProviders/Properties/Resources.resources libs/PgProviders/*.cs libs/PgProviders/Properties/*.cs
 	-patch -p0 -N -s < PgProviders.patch

@@ -23,7 +23,7 @@ namespace Neztu
     public DateTime Timestamp;
   }
 
-  interface ITrackDatabase
+  public interface ITrackDatabase
   {
     Track GetTrack(Guid trackId);
     Track[] GetTracks(string title, string artist, string album);
@@ -34,11 +34,19 @@ namespace Neztu
     void RemoveTrack(Guid trackId);
   }
 
-  interface IVoteDatabase
+  public interface IVoteDatabase
   {
     Vote[] GetVotesByUser(Guid userId);
     Vote[] GetAll();
 
     void AddVote(Guid userId, Guid trackId);
+    void RemoveVote(Guid userId, Guid trackId);
+  }
+
+  public interface IHistoryDatabase
+  {
+    Vote[] GetAll();
+
+    void AddPlay(Guid userId, Guid trackId);
   }
 }
