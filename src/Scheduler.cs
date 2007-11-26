@@ -4,11 +4,10 @@ namespace Neztu
 {
   public interface IScheduler
   {
-    void Initialize(IRandomSelector randomSelector, ITrackDatabase trackDb, IVoteDatabase voteDb,
-        IHistoryDatabase historyDb);
+    void Initialize(IRandomSelector randomSelector, IStateDatabase stateDb);
 
     Track PlayNext();
-    Vote[] GetSchedule()
+    Vote[] GetSchedule();
   }
 
   public interface IRandomSelector
@@ -20,33 +19,28 @@ namespace Neztu
   public class FIFOScheduler : IScheduler
   {
     private IRandomSelector m_randomSelector;
-    private ITrackDatabase m_trackDatabase;
-    private IVoteDatabase m_voteDatabase;
-    private IHistoryDatabase m_historyDatabase;
+    private IStateDatabase m_stateDatabase;
 
-    public void Initialize(IRandomSelector randomSelector, ITrackDatabase trackDb, IVoteDatabase voteDb,
-        IHistoryDatabase historyDb)
+    public void Initialize(IRandomSelector randomSelector, IStateDatabase stateDb)
     {
       m_randomSelector = randomSelector;
-      m_trackDatabase = trackDb;
-      m_voteDatabase = voteDb;
-      m_historyDatabase = historyDb;
+      m_stateDatabase = stateDb;
     }
 
     public Track PlayNext()
     {
       Track selected = m_randomSelector.GetRandom();
 
-      Vote[] votes = m_voteDatabase.GetAll();
+      Vote[] votes = m_stateDatabase.GetVotes();
       if (votes.Length > 0)
       {
-        selected = m_trackDatabase.GetTrack(votes[0].TrackId);
-        m_voteDatabase.RemoveVote(votes[0].UserId, votes[0].TrackId);
-        m_historyDatabase.AddPlay(votes[0].UserId, votes[0].TrackId);
+        selected = votes[0].ReqTrack;
+        m_stateDatabase.RemoveVote(votes[0].UserId, votes[0].ReqTrack.TrackId);
+        m_stateDatabase.AddHistory(votes[0].UserId, votes[0].ReqTrack.TrackId);
       }
       else
       {
-        m_historyDatabase.AddPlay(Guid.Empty, selected.TrackId);
+        m_stateDatabase.AddHistory(Guid.Empty, selected.TrackId);
       }
 
       return selected;
@@ -54,27 +48,43 @@ namespace Neztu
 
     public Vote[] GetSchedule()
     {
-      return m_voteDatabase.GetAll();
+      return m_stateDatabase.GetVotes();
     }
   }
 
   public class FullyRandomSelector : IRandomSelector
   {
     private ITrackDatabase m_trackDatabase;
+    private bool m_dbIsRandomizable;
     private Random m_rng;
 
     public void Initialize(ITrackDatabase trackDb)
     {
-      m_rng = new Random();
+      if (trackDb is IRandomizableTrackDatabase)
+      {
+        m_dbIsRandomizable = true;
+      }
+      else
+      {
+        m_rng = new Random();
+      }
+
       m_trackDatabase = trackDb;
     }
 
     public Track GetRandom()
     {
       // FIXME: what if there are no tracks?
-      Track[] tracks = m_trackDatabase.GetAll();
-      int r = m_rng.Next(tracks.Length);
-      return tracks[r];
+      if (m_dbIsRandomizable)
+      {
+        return ((IRandomizableTrackDatabase)m_trackDatabase).GetRandom();
+      }
+      else
+      {
+        Track[] tracks = m_trackDatabase.GetTracks();
+        int r = m_rng.Next(tracks.Length);
+        return tracks[r];
+      }
     }
   }
 }

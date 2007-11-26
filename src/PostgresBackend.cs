@@ -9,7 +9,7 @@ using NpgsqlTypes;
 
 namespace Neztu
 {
-  public class PostgresTrackDatabase: ITrackDatabase
+  public class PostgresTrackDatabase: IRandomizableTrackDatabase
   {
     private const string m_tracksTable = "Tracks";
     private string m_connectionString = string.Empty;
@@ -99,7 +99,7 @@ namespace Neztu
       return ret;
     }
 
-    public Track[] GetAll()
+    public Track[] GetTracks()
     {
       Queue ret = new Queue();
 
@@ -144,11 +144,11 @@ namespace Neztu
               }
             }
           }
-          /*catch (NpgsqlException e)
+          catch (NpgsqlException e)
           {
             Trace.WriteLine(e.ToString());
             throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
-          }*/
+          }
           finally
           {
             if (dbConn != null)
@@ -162,7 +162,73 @@ namespace Neztu
       return tracks;
     }
 
-    public DataView GetViewofAll()
+    public Track GetRandom()
+    {
+      Track ret;
+      ret.TrackId = Guid.Empty;
+      ret.Filename = string.Empty;
+      ret.Title = string.Empty;
+      ret.Artist = string.Empty;
+      ret.Album = string.Empty;
+      ret.DiscNumber = 0;
+      ret.TrackNumber = 0;
+      ret.Length = TimeSpan.Zero;
+      ret.UserId = Guid.Empty;
+      using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
+      {
+        using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
+        {
+          dbCommand.CommandText = string.Format(
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserId\" FROM \"{0}\" ORDER BY random() LIMIT 1",
+              m_tracksTable);
+
+          try
+          {
+            dbConn.Open();
+            dbCommand.Prepare();
+
+            using (NpgsqlDataReader reader = dbCommand.ExecuteReader())
+            {
+              while (reader.Read())
+              {
+                ret.TrackId = new Guid((string)reader.GetValue(0));
+                ret.Filename = (string)reader.GetValue(1);
+                if (!reader.IsDBNull(2))
+                  ret.Artist = (string)reader.GetValue(2);
+                else
+                  ret.Artist = string.Empty;
+                if (!reader.IsDBNull(3))
+                  ret.Title = (string)reader.GetValue(3);
+                else
+                  ret.Title = string.Empty;
+                if (!reader.IsDBNull(4))
+                  ret.Album = (string)reader.GetValue(4);
+                else
+                  ret.Album = string.Empty;
+                ret.DiscNumber = (uint)(int)reader.GetValue(5);
+                ret.TrackNumber = (uint)(int)reader.GetValue(6);
+                ret.Length = new TimeSpan(0, 0, (int)reader.GetValue(7));
+                ret.UserId = new Guid((string)reader.GetValue(8));
+              }
+            }
+          }
+          catch (NpgsqlException e)
+          {
+            Trace.WriteLine(e.ToString());
+            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+          }
+          finally
+          {
+            if (dbConn != null)
+              dbConn.Close();
+          }
+        }
+      }
+
+      return ret;
+    }
+
+    public DataView GetTrackView()
     {
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
@@ -276,21 +342,23 @@ namespace Neztu
     }
   }
 
-  public class PostgresVoteDatabase : IVoteDatabase
+  public class PostgresStateDatabase : IStateDatabase
   {
     private const string m_votesTable = "Votes";
+    private const string m_historyTable = "History";
     private string m_connectionString = string.Empty;
+    private ITrackDatabase m_trackDatabase;
 
-    public PostgresVoteDatabase()
+    public PostgresStateDatabase()
     {
       // Get connection string.
-      string connStrName = ConfigurationManager.AppSettings["VoteDatabaseConnectionStringName"];
+      string connStrName = ConfigurationManager.AppSettings["StateDatabaseConnectionStringName"];
 
       if (string.IsNullOrEmpty(connStrName))
       {
         /*throw new ArgumentOutOfRangeException("TrackDatabaseConnectionStringName",
             Properties.Resources.ErrArgumentNullOrEmpty);*/
-        throw new ArgumentOutOfRangeException("VoteDatabaseConnectionStringName");
+        throw new ArgumentOutOfRangeException("StateDatabaseConnectionStringName");
       }
       else
       {
@@ -306,12 +374,17 @@ namespace Neztu
       }
     }
 
-    public Vote[] GetVotesByUser(Guid UserId)
+    public void Initialize(ITrackDatabase trackDb)
+    {
+      m_trackDatabase = trackDb;
+    }
+
+    public Vote[] GetVotes(Guid UserId)
     {
       return null;
     }
 
-    public Vote[] GetAll()
+    public Vote[] GetVotes()
     {
       Queue ret = new Queue();
 
@@ -334,7 +407,7 @@ namespace Neztu
               {
                 Vote v;
                 v.UserId = new Guid((string)reader.GetValue(0));
-                v.TrackId = new Guid((string)reader.GetValue(1));
+                v.ReqTrack = m_trackDatabase.GetTrack(new Guid((string)reader.GetValue(1)));
                 v.Timestamp = (DateTime)reader.GetValue(2);
 
                 ret.Enqueue(v);
@@ -424,39 +497,8 @@ namespace Neztu
         }
       }
     }
-  }
 
-  public class PostgresHistoryDatabase : IHistoryDatabase
-  {
-    private const string m_historyTable = "History";
-    private string m_connectionString = string.Empty;
-
-    public PostgresHistoryDatabase()
-    {
-      // Get connection string.
-      string connStrName = ConfigurationManager.AppSettings["VoteDatabaseConnectionStringName"];
-
-      if (string.IsNullOrEmpty(connStrName))
-      {
-        /*throw new ArgumentOutOfRangeException("TrackDatabaseConnectionStringName",
-            Properties.Resources.ErrArgumentNullOrEmpty);*/
-        throw new ArgumentOutOfRangeException("VoteDatabaseConnectionStringName");
-      }
-      else
-      {
-        ConnectionStringSettings ConnectionStringSettings = ConfigurationManager.ConnectionStrings[connStrName];
-
-        if (ConnectionStringSettings == null || string.IsNullOrEmpty(ConnectionStringSettings.ConnectionString.Trim()))
-        {
-          //throw new NeztuException(Properties.Resources.ErrConnectionStringNullOrEmpty);
-          throw new Exception("Connection String Empty");
-        }
-
-        m_connectionString = ConnectionStringSettings.ConnectionString;
-      }
-    }
-
-    public Vote[] GetAll()
+    public Vote[] GetHistory()
     {
       Queue ret = new Queue();
 
@@ -479,7 +521,7 @@ namespace Neztu
               {
                 Vote v;
                 v.UserId = new Guid((string)reader.GetValue(0));
-                v.TrackId = new Guid((string)reader.GetValue(1));
+                v.ReqTrack = m_trackDatabase.GetTrack(new Guid((string)reader.GetValue(1)));
                 v.Timestamp = (DateTime)reader.GetValue(2);
 
                 ret.Enqueue(v);
@@ -504,7 +546,7 @@ namespace Neztu
       return votes;
     }
 
-    public void AddPlay(Guid userId, Guid trackId)
+    public void AddHistory(Guid userId, Guid trackId)
     {
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
@@ -523,11 +565,11 @@ namespace Neztu
             dbConn.Open();
             dbCommand.ExecuteNonQuery();
           }
-/*          catch (NpgsqlException e)
+          catch (NpgsqlException e)
           {
             Trace.WriteLine(e.ToString());
             throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
-          }*/
+          }
           finally
           {
             if (dbConn != null)

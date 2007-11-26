@@ -20,6 +20,19 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- Name: History; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
+--
+
+CREATE TABLE "History" (
+    "UserId" character(36) NOT NULL,
+    "TrackId" character(36) NOT NULL,
+    "Timestamp" timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public."History" OWNER TO "www-data";
+
+--
 -- Name: ProfileData; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
 --
 
@@ -172,6 +185,22 @@ CREATE TABLE "Votes" (
 ALTER TABLE public."Votes" OWNER TO "www-data";
 
 --
+-- Name: History_pkey; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+--
+
+ALTER TABLE ONLY "History"
+    ADD CONSTRAINT "History_pkey" PRIMARY KEY ("Timestamp");
+
+
+--
+-- Name: Tracks_Filename_key; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+--
+
+ALTER TABLE ONLY "Tracks"
+    ADD CONSTRAINT "Tracks_Filename_key" UNIQUE ("Filename");
+
+
+--
 -- Name: Tracks_pkey; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
 --
 
@@ -320,6 +349,33 @@ REVOKE ALL ON SCHEMA public FROM PUBLIC;
 REVOKE ALL ON SCHEMA public FROM postgres;
 GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- Name: History; Type: ACL; Schema: public; Owner: www-data
+--
+
+REVOKE ALL ON TABLE "History" FROM PUBLIC;
+REVOKE ALL ON TABLE "History" FROM "www-data";
+GRANT ALL ON TABLE "History" TO "www-data";
+
+
+--
+-- Name: Tracks; Type: ACL; Schema: public; Owner: www-data
+--
+
+REVOKE ALL ON TABLE "Tracks" FROM PUBLIC;
+REVOKE ALL ON TABLE "Tracks" FROM "www-data";
+GRANT ALL ON TABLE "Tracks" TO "www-data";
+
+
+--
+-- Name: Votes; Type: ACL; Schema: public; Owner: www-data
+--
+
+REVOKE ALL ON TABLE "Votes" FROM PUBLIC;
+REVOKE ALL ON TABLE "Votes" FROM "www-data";
+GRANT ALL ON TABLE "Votes" TO "www-data";
 
 
 --

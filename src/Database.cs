@@ -19,7 +19,7 @@ namespace Neztu
   public struct Vote
   {
     public Guid UserId;
-    public Guid TrackId;
+    public Track ReqTrack;
     public DateTime Timestamp;
   }
 
@@ -27,26 +27,28 @@ namespace Neztu
   {
     Track GetTrack(Guid trackId);
     Track[] GetTracks(string title, string artist, string album);
-    Track[] GetAll();
-    DataView GetViewofAll();
+    Track[] GetTracks();
+    DataView GetTrackView();
 
     Guid AddTrack(Track newTrack);
     void RemoveTrack(Guid trackId);
   }
 
-  public interface IVoteDatabase
+  public interface IRandomizableTrackDatabase : ITrackDatabase
   {
-    Vote[] GetVotesByUser(Guid userId);
-    Vote[] GetAll();
-
-    void AddVote(Guid userId, Guid trackId);
-    void RemoveVote(Guid userId, Guid trackId);
+    Track GetRandom();
   }
 
-  public interface IHistoryDatabase
+  public interface IStateDatabase
   {
-    Vote[] GetAll();
+    void Initialize(ITrackDatabase trackDb);
 
-    void AddPlay(Guid userId, Guid trackId);
+    Vote[] GetVotes();
+    Vote[] GetVotes(Guid userId);
+    void AddVote(Guid userId, Guid trackId);
+    void RemoveVote(Guid userId, Guid trackId);
+
+    Vote[] GetHistory();
+    void AddHistory(Guid userId, Guid trackId);
   }
 }

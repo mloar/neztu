@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Configuration;
 using System.Security.Cryptography;
 using System.Web.Profile;
@@ -25,7 +26,18 @@ public class IndexPage : Page
           dg = (DataGrid)c;
       }
       ITrackDatabase db = new PostgresTrackDatabase();
-      dg.DataSource = db.GetViewofAll();
+      IStateDatabase stateDb = new PostgresStateDatabase();
+      stateDb.Initialize(db);
+      IScheduler sched = new FIFOScheduler();
+      sched.Initialize(null, stateDb);
+      Vote[] queue = sched.GetSchedule();
+      Console.Error.WriteLine(queue.Length);
+      ArrayList arr = new ArrayList();
+      foreach (Vote v in queue)
+      {
+        arr.Add(v);
+      }
+      dg.DataSource = arr;
       dg.DataBind();
       if (!(Session["Number"] is int))
         Session["Number"] = 0;
@@ -76,7 +88,7 @@ public class LoginPage : Page
       string user = Request.ServerVariables["REMOTE_USER"];
       if (user != null && user != "")
       {
-        if (Membership.GetUser(Context.User.Identity.Name, false) == null)
+        if (Membership.GetUser(user, false) == null)
         {
           byte[] random = new byte[32];
           RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
