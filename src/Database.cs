@@ -13,12 +13,12 @@ namespace Neztu
     public uint DiscNumber;
     public uint TrackNumber;
     public TimeSpan Length;
-    public Guid UserId;
+    public string UserName;
   }
 
   public struct Vote
   {
-    public Guid UserId;
+    public string UserName;
     public Track ReqTrack;
     public DateTime Timestamp;
   }
@@ -44,11 +44,13 @@ namespace Neztu
     void Initialize(ITrackDatabase trackDb);
 
     Vote[] GetVotes();
-    Vote[] GetVotes(Guid userId);
-    void AddVote(Guid userId, Guid trackId);
-    void RemoveVote(Guid userId, Guid trackId);
+    Vote[] GetVotes(string userName);
+    void AddVote(string userName, Guid trackId);
+    void RemoveVote(string userName, Guid trackId);
+    void SwapVotes(Vote vote1, Vote vote2);
 
     Vote[] GetHistory();
-    void AddHistory(Guid userId, Guid trackId);
+    void AddHistory(string userName, Guid trackId);
+    Vote GetCurrent();
   }
 }

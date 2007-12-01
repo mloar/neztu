@@ -22,7 +22,7 @@ namespace Neztu
       if (string.IsNullOrEmpty(connStrName))
       {
         /*throw new ArgumentOutOfRangeException("TrackDatabaseConnectionStringName",
-            Properties.Resources.ErrArgumentNullOrEmpty);*/
+          Properties.Resources.ErrArgumentNullOrEmpty);*/
         throw new ArgumentOutOfRangeException("TrackDatabaseConnectionStringName");
       }
       else
@@ -50,14 +50,14 @@ namespace Neztu
       ret.DiscNumber = 0;
       ret.TrackNumber = 0;
       ret.Length = TimeSpan.Zero;
-      ret.UserId = Guid.Empty;
+      ret.UserName = string.Empty;
 
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserId\" FROM \"{0}\" WHERE \"TrackId\" = @TrackId",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" WHERE \"TrackId\" = @TrackId",
               m_tracksTable);
 
           dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = trackId;
@@ -73,13 +73,13 @@ namespace Neztu
               {
                 ret.TrackId = new Guid((string)reader.GetValue(0));
                 ret.Filename = (string)reader.GetValue(1);
-                ret.Title = (string)reader.GetValue(2);
-                ret.Artist = (string)reader.GetValue(3);
+                ret.Artist = (string)reader.GetValue(2);
+                ret.Title = (string)reader.GetValue(3);
                 ret.Album = (string)reader.GetValue(4);
                 ret.DiscNumber = (uint)(int)reader.GetValue(5);
                 ret.TrackNumber = (uint)(int)reader.GetValue(6);
                 ret.Length = new TimeSpan(0, 0, (int)reader.GetValue(7));
-                ret.UserId = new Guid((string)reader.GetValue(8));
+                ret.UserName = (string)reader.GetValue(8);
               }
             }
           }
@@ -108,7 +108,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserId\" FROM \"{0}\"",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\"",
               m_tracksTable);
 
           try
@@ -138,7 +138,7 @@ namespace Neztu
                 t.DiscNumber = (uint)(int)reader.GetValue(5);
                 t.TrackNumber = (uint)(int)reader.GetValue(6);
                 t.Length = new TimeSpan(0, 0, (int)reader.GetValue(7));
-                t.UserId = new Guid((string)reader.GetValue(8));
+                t.UserName = (string)reader.GetValue(8);
 
                 ret.Enqueue(t);
               }
@@ -173,13 +173,13 @@ namespace Neztu
       ret.DiscNumber = 0;
       ret.TrackNumber = 0;
       ret.Length = TimeSpan.Zero;
-      ret.UserId = Guid.Empty;
+      ret.UserName = string.Empty;
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserId\" FROM \"{0}\" ORDER BY random() LIMIT 1",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" ORDER BY random() LIMIT 1",
               m_tracksTable);
 
           try
@@ -208,7 +208,7 @@ namespace Neztu
                 ret.DiscNumber = (uint)(int)reader.GetValue(5);
                 ret.TrackNumber = (uint)(int)reader.GetValue(6);
                 ret.Length = new TimeSpan(0, 0, (int)reader.GetValue(7));
-                ret.UserId = new Guid((string)reader.GetValue(8));
+                ret.UserName = (string)reader.GetValue(8);
               }
             }
           }
@@ -235,7 +235,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserId\" FROM \"{0}\"",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\"",
               m_tracksTable);
 
           using(NpgsqlDataAdapter dbAdapter = new NpgsqlDataAdapter(dbCommand))
@@ -278,7 +278,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "INSERT INTO \"{0}\" (\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserId\") VALUES(@TrackId, @Filename, @Artist, @Title, @Album, @DiscNumber, @TrackNumber, @Length, @UserId)",
+              "INSERT INTO \"{0}\" (\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\") VALUES(@TrackId, @Filename, @Artist, @Title, @Album, @DiscNumber, @TrackNumber, @Length, @UserName)",
               m_tracksTable);
 
           dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = newTrack.TrackId.ToString();
@@ -289,7 +289,7 @@ namespace Neztu
           dbCommand.Parameters.Add("@DiscNumber", NpgsqlDbType.Integer, 0).Value = newTrack.DiscNumber;
           dbCommand.Parameters.Add("@TrackNumber", NpgsqlDbType.Integer, 0).Value = newTrack.TrackNumber;
           dbCommand.Parameters.Add("@Length", NpgsqlDbType.Integer, 0).Value = (uint)newTrack.Length.TotalSeconds;
-          dbCommand.Parameters.Add("@UserId", NpgsqlDbType.Varchar, 36).Value = newTrack.UserId.ToString();
+          dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = newTrack.UserName;
 
           try
           {
@@ -357,7 +357,7 @@ namespace Neztu
       if (string.IsNullOrEmpty(connStrName))
       {
         /*throw new ArgumentOutOfRangeException("TrackDatabaseConnectionStringName",
-            Properties.Resources.ErrArgumentNullOrEmpty);*/
+          Properties.Resources.ErrArgumentNullOrEmpty);*/
         throw new ArgumentOutOfRangeException("StateDatabaseConnectionStringName");
       }
       else
@@ -379,12 +379,7 @@ namespace Neztu
       m_trackDatabase = trackDb;
     }
 
-    public Vote[] GetVotes(Guid UserId)
-    {
-      return null;
-    }
-
-    public Vote[] GetVotes()
+    public Vote[] GetVotes(string userName)
     {
       Queue ret = new Queue();
 
@@ -393,8 +388,10 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"UserId\", \"TrackId\", \"Timestamp\" FROM \"{0}\" ORDER BY \"Timestamp\"",
+              "SELECT \"UserName\", \"TrackId\", \"Timestamp\" FROM \"{0}\" WHERE \"UserName\"=@UserName ORDER BY \"Timestamp\"",
               m_votesTable);
+
+          dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = userName;
 
           try
           {
@@ -406,7 +403,7 @@ namespace Neztu
               while (reader.Read())
               {
                 Vote v;
-                v.UserId = new Guid((string)reader.GetValue(0));
+                v.UserName = (string)reader.GetValue(0);
                 v.ReqTrack = m_trackDatabase.GetTrack(new Guid((string)reader.GetValue(1)));
                 v.Timestamp = (DateTime)reader.GetValue(2);
 
@@ -432,17 +429,65 @@ namespace Neztu
       return votes;
     }
 
-    public void AddVote(Guid userId, Guid trackId)
+    public Vote[] GetVotes()
+    {
+      Queue ret = new Queue();
+
+      using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
+      {
+        using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
+        {
+          dbCommand.CommandText = string.Format(
+              "SELECT \"UserName\", \"TrackId\", \"Timestamp\" FROM \"{0}\" ORDER BY \"Timestamp\"",
+              m_votesTable);
+
+          try
+          {
+            dbConn.Open();
+            dbCommand.Prepare();
+
+            using (NpgsqlDataReader reader = dbCommand.ExecuteReader())
+            {
+              while (reader.Read())
+              {
+                Vote v;
+                v.UserName = (string)reader.GetValue(0);
+                v.ReqTrack = m_trackDatabase.GetTrack(new Guid((string)reader.GetValue(1)));
+                v.Timestamp = (DateTime)reader.GetValue(2);
+
+                ret.Enqueue(v);
+              }
+            }
+          }
+          catch (NpgsqlException e)
+          {
+            Trace.WriteLine(e.ToString());
+            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+          }
+          finally
+          {
+            if (dbConn != null)
+              dbConn.Close();
+          }
+        }
+      }
+
+      Vote[] votes = new Vote[ret.Count];
+      ret.CopyTo(votes, 0);
+      return votes;
+    }
+
+    public void AddVote(string userName, Guid trackId)
     {
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "INSERT INTO \"{0}\" (\"UserId\", \"TrackId\", \"Timestamp\") VALUES(@UserId, @TrackId, @Timestamp)",
+              "INSERT INTO \"{0}\" (\"UserName\", \"TrackId\", \"Timestamp\") VALUES(@UserName, @TrackId, @Timestamp)",
               m_votesTable);
 
-          dbCommand.Parameters.Add("@UserId", NpgsqlDbType.Varchar, 36).Value = userId;
+          dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = userName;
           dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = trackId;
           dbCommand.Parameters.Add("@Timestamp", NpgsqlDbType.Timestamp, 255).Value = DateTime.Now;
 
@@ -465,17 +510,17 @@ namespace Neztu
       }
     }
 
-    public void RemoveVote(Guid userId, Guid trackId)
+    public void RemoveVote(string userName, Guid trackId)
     {
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "DELETE FROM \"{0}\" WHERE \"UserId\"=@UserId AND \"TrackId\"=@TrackId",
+              "DELETE FROM \"{0}\" WHERE \"UserName\"=@UserName AND \"TrackId\"=@TrackId",
               m_votesTable);
 
-          dbCommand.Parameters.Add("@UserId", NpgsqlDbType.Varchar, 36).Value = userId;
+          dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = userName;
           dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = trackId;
           dbCommand.Parameters.Add("@Timestamp", NpgsqlDbType.Timestamp, 255).Value = DateTime.Now;
 
@@ -494,6 +539,65 @@ namespace Neztu
             if (dbConn != null)
               dbConn.Close();
           }
+        }
+      }
+    }
+
+    public void SwapVotes(Vote vote1, Vote vote2)
+    {
+      using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
+      {
+        try
+        {
+          dbConn.Open();
+          using (NpgsqlCommand dbCommand1 = dbConn.CreateCommand())
+          {
+            using (NpgsqlCommand dbCommand2 = dbConn.CreateCommand())
+            {
+              dbCommand1.CommandText = string.Format(
+                  "UPDATE \"{0}\" SET \"Timestamp\"=@Timestamp WHERE \"UserName\"=@UserName AND \"TrackId\"=@TrackId",
+                  m_votesTable);
+              dbCommand2.CommandText = string.Format(
+                  "UPDATE \"{0}\" SET \"Timestamp\"=@Timestamp WHERE \"UserName\"=@UserName AND \"TrackId\"=@TrackId",
+                  m_votesTable);
+
+              dbCommand1.Parameters.Add("@Timestamp", NpgsqlDbType.Timestamp, 255).Value = vote2.Timestamp;
+              dbCommand1.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = vote1.UserName;
+              dbCommand1.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = vote1.ReqTrack.TrackId;
+              dbCommand2.Parameters.Add("@Timestamp", NpgsqlDbType.Timestamp, 255).Value = vote1.Timestamp;
+              dbCommand2.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = vote2.UserName;
+              dbCommand2.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = vote2.ReqTrack.TrackId;
+
+              dbCommand1.Prepare();
+              dbCommand2.Prepare();
+
+              using (NpgsqlTransaction dbTrans = dbConn.BeginTransaction())
+              {
+                try
+                {
+                  dbCommand1.ExecuteNonQuery();
+                  dbCommand2.ExecuteNonQuery();
+                  dbTrans.Commit();
+                }
+                catch (NpgsqlException e)
+                {
+                  dbTrans.Rollback();
+                  Trace.WriteLine(e.ToString());
+                  throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+                }
+              }
+            }
+          }
+        }
+        catch (NpgsqlException e)
+        {
+          Trace.WriteLine(e.ToString());
+          throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+        }
+        finally
+        {
+          if (dbConn != null)
+            dbConn.Close();
         }
       }
     }
@@ -507,7 +611,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"UserId\", \"TrackId\", \"Timestamp\" FROM \"{0}\" ORDER BY \"Timestamp\"",
+              "SELECT \"UserName\", \"TrackId\", \"Timestamp\" FROM \"{0}\" ORDER BY \"Timestamp\"",
               m_historyTable);
 
           try
@@ -520,7 +624,7 @@ namespace Neztu
               while (reader.Read())
               {
                 Vote v;
-                v.UserId = new Guid((string)reader.GetValue(0));
+                v.UserName = (string)reader.GetValue(0);
                 v.ReqTrack = m_trackDatabase.GetTrack(new Guid((string)reader.GetValue(1)));
                 v.Timestamp = (DateTime)reader.GetValue(2);
 
@@ -546,17 +650,17 @@ namespace Neztu
       return votes;
     }
 
-    public void AddHistory(Guid userId, Guid trackId)
+    public void AddHistory(string userName, Guid trackId)
     {
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "INSERT INTO \"{0}\" (\"UserId\", \"TrackId\", \"Timestamp\") VALUES(@UserId, @TrackId, @Timestamp)",
+              "INSERT INTO \"{0}\" (\"UserName\", \"TrackId\", \"Timestamp\") VALUES(@UserName, @TrackId, @Timestamp)",
               m_historyTable);
 
-          dbCommand.Parameters.Add("@UserId", NpgsqlDbType.Varchar, 36).Value = userId;
+          dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 36).Value = userName;
           dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = trackId;
           dbCommand.Parameters.Add("@Timestamp", NpgsqlDbType.Timestamp, 255).Value = DateTime.Now;
 
@@ -578,6 +682,59 @@ namespace Neztu
         }
       }
     }
+
+    public Vote GetCurrent()
+    {
+      Vote ret;
+      ret.UserName = string.Empty;
+      ret.ReqTrack.TrackId = Guid.Empty;
+      ret.ReqTrack.Filename = string.Empty;
+      ret.ReqTrack.Title = string.Empty;
+      ret.ReqTrack.Artist = string.Empty;
+      ret.ReqTrack.Album = string.Empty;
+      ret.ReqTrack.DiscNumber = 0;
+      ret.ReqTrack.TrackNumber = 0;
+      ret.ReqTrack.Length = TimeSpan.Zero;
+      ret.ReqTrack.UserName = string.Empty;
+      ret.Timestamp = DateTime.MinValue;
+
+      using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
+      {
+        using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
+        {
+          dbCommand.CommandText = string.Format(
+              "SELECT \"UserName\", \"TrackId\", \"Timestamp\" FROM \"{0}\" ORDER BY \"Timestamp\" DESC LIMIT 1",
+              m_historyTable);
+
+          try
+          {
+            dbConn.Open();
+            dbCommand.Prepare();
+
+            using (NpgsqlDataReader reader = dbCommand.ExecuteReader())
+            {
+              while (reader.Read())
+              {
+                ret.UserName = (string)reader.GetValue(0);
+                ret.ReqTrack = m_trackDatabase.GetTrack(new Guid((string)reader.GetValue(1)));
+                ret.Timestamp = (DateTime)reader.GetValue(2);
+              }
+            }
+          }
+          catch (NpgsqlException e)
+          {
+            Trace.WriteLine(e.ToString());
+            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+          }
+          finally
+          {
+            if (dbConn != null)
+              dbConn.Close();
+          }
+        }
+      }
+
+      return ret;
+    }
   }
 }
-

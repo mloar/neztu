@@ -1,0 +1,41 @@
+BODY {
+  margin-left:auto;
+  margin-right:auto;
+  width:80%;
+}
+
+#header {
+  text-align:center;
+  width:100%;
+}
+
+#menu {
+  clear:both;
+  margin-right:15pt;
+  text-align:center;
+  width:100%;
+}
+
+#menu A {
+  font:14pt Arial,Helvetica,sans-serif;
+  text-decoration:none;
+}
+
+#main {
+  border:3pt outset blue;
+  min-height:300pt;
+}
+
+#nowplaying {
+  clear:both;
+  font-size:14pt;
+  margin-left:25%;
+  width:100%;
+}
+
+#LoginForm
+{
+  font:12pt Arial,Helvetica,sans-serif;
+  margin-top:15%;
+  text-align:center;
+}

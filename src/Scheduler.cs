@@ -35,12 +35,12 @@ namespace Neztu
       if (votes.Length > 0)
       {
         selected = votes[0].ReqTrack;
-        m_stateDatabase.RemoveVote(votes[0].UserId, votes[0].ReqTrack.TrackId);
-        m_stateDatabase.AddHistory(votes[0].UserId, votes[0].ReqTrack.TrackId);
+        m_stateDatabase.RemoveVote(votes[0].UserName, votes[0].ReqTrack.TrackId);
+        m_stateDatabase.AddHistory(votes[0].UserName, votes[0].ReqTrack.TrackId);
       }
       else
       {
-        m_stateDatabase.AddHistory(Guid.Empty, selected.TrackId);
+        m_stateDatabase.AddHistory(string.Empty, selected.TrackId);
       }
 
       return selected;

@@ -1,6 +1,8 @@
 using System;
-using System.Collections;
 using System.Configuration;
+using System.Data;
+using System.Diagnostics;
+using System.IO;
 using System.Security.Cryptography;
 using System.Web.Profile;
 using System.Web.Security;
@@ -9,57 +11,179 @@ using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
 using Neztu;
 
-public class IndexPage : Page
+public class PlayListPage : Page
 {
-  public LoginView LoginView1;
+  public DataGrid PlayListData;
+
   public void Page_Load(object o, EventArgs e)
   {
-    if (Request.IsAuthenticated)
+    if (!IsPostBack)
     {
-      Label TheLabel = new Label();
-      DataGrid dg = new DataGrid();
-      foreach (Control c in LoginView1.Controls[0].Controls)
-      {
-        if (c is Label)
-          TheLabel = (Label)c;
-        if (c is DataGrid)
-          dg = (DataGrid)c;
-      }
-      ITrackDatabase db = new PostgresTrackDatabase();
+      ITrackDatabase trackDb = new PostgresTrackDatabase();
       IStateDatabase stateDb = new PostgresStateDatabase();
-      stateDb.Initialize(db);
-      IScheduler sched = new FIFOScheduler();
-      sched.Initialize(null, stateDb);
-      Vote[] queue = sched.GetSchedule();
-      Console.Error.WriteLine(queue.Length);
-      ArrayList arr = new ArrayList();
-      foreach (Vote v in queue)
+      stateDb.Initialize(trackDb);
+
+      Vote[] myVotes = stateDb.GetVotes(User.Identity.Name);
+
+      DataView dataView = new DataView();
+      dataView.Table = new DataTable("PlayList");
+      dataView.Table.Columns.Add(new DataColumn("Track"));
+      dataView.Table.Columns.Add(new DataColumn("Album"));
+      dataView.Table.Columns.Add(new DataColumn("Length"));
+      foreach (Vote v in myVotes)
       {
-        arr.Add(v);
+        DataRowView rowView = dataView.AddNew();
+        rowView["Track"] = v.ReqTrack.Title;
+        rowView["Album"] = v.ReqTrack.Album;
+        rowView["Length"] = v.ReqTrack.Length.ToString();
+        rowView.EndEdit();
       }
-      dg.DataSource = arr;
-      dg.DataBind();
-      if (!(Session["Number"] is int))
-        Session["Number"] = 0;
-      TheLabel.Text = ((int)Session["Number"]).ToString();
-      Session["Number"] = ((int)Session["Number"]) + 1;
-      if (Context.Profile.IsAnonymous)
+      PlayListData.DataSource = dataView;
+      PlayListData.DataBind();
+      PlayListData.Visible = true;
+    }
+  }
+
+  public void PlayListData_Command(object o, DataGridCommandEventArgs e)
+  {
+    ITrackDatabase trackDb = new PostgresTrackDatabase();
+    IStateDatabase stateDb = new PostgresStateDatabase();
+    stateDb.Initialize(trackDb);
+
+    Vote[] myVotes = stateDb.GetVotes(User.Identity.Name);
+
+    switch(((LinkButton)e.CommandSource).CommandName)
+    {
+      case "Up":
+        if (e.Item.ItemIndex > 0)
+        {
+          stateDb.SwapVotes(myVotes[e.Item.ItemIndex], myVotes[e.Item.ItemIndex - 1]);
+        }
+      break;
+      case "Down":
+        if (e.Item.ItemIndex < myVotes.Length - 1)
+        {
+          stateDb.SwapVotes(myVotes[e.Item.ItemIndex], myVotes[e.Item.ItemIndex + 1]);
+        }
+      break;
+      case "Remove":
+        stateDb.RemoveVote(myVotes[e.Item.ItemIndex].UserName, myVotes[e.Item.ItemIndex].ReqTrack.TrackId);
+      break;
+    }
+
+    myVotes = stateDb.GetVotes(User.Identity.Name);
+
+    DataView dataView = new DataView();
+    dataView.Table = new DataTable("PlayList");
+    dataView.Table.Columns.Add(new DataColumn("Track"));
+    dataView.Table.Columns.Add(new DataColumn("Album"));
+    dataView.Table.Columns.Add(new DataColumn("Length"));
+    foreach (Vote v in myVotes)
+    {
+      DataRowView rowView = dataView.AddNew();
+      rowView["Track"] = v.ReqTrack.Title;
+      rowView["Album"] = v.ReqTrack.Album;
+      rowView["Length"] = v.ReqTrack.Length.ToString();
+      rowView.EndEdit();
+    }
+
+    PlayListData.DataSource = dataView;
+    PlayListData.DataBind();
+    PlayListData.Visible = true;
+  }
+}
+
+public class AddPage : Page
+{
+  public FileUpload FileUploader;
+  public Button UploadButton;
+  public Label TheLabel;
+  public HtmlForm UploadForm;
+  public void Page_Load(object o, EventArgs e)
+  {
+  }
+
+  public void UploadButton_Click(object o, EventArgs e)
+  {
+    if (FileUploader.HasFile)
+    {
+      Track t;
+      string filename = Path.GetFileName(FileUploader.FileName);
+      string uploadDirectory = ConfigurationManager.AppSettings["UploadDirectory"] + Path.DirectorySeparatorChar;
+
+      // Mono doesn't do this correctly
+      int index = filename.LastIndexOf('\\');
+      if (index > -1)
       {
-        TheLabel.Text += "anonymous profile";
+        filename = filename.Substring(index + 1);
       }
-      else if (Membership.GetUser(Context.User.Identity.Name, false) == null)
+
+      try
       {
-        TheLabel.Text += "you do not exist, creating you";
-        // FIXME: this password should be randomly generated
-        Membership.CreateUser(Context.User.Identity.Name, "fjdslafjdljfldsajfljds");
-        Context.Profile["FirstName"] = "test";
-        Context.Profile.Save();
+        t = TagReader.ReadStream(filename, FileUploader.FileContent);
       }
-      else
+      catch (Exception)
       {
-        TheLabel.Text += "FirstName: " + Context.Profile["FirstName"].ToString();
+        TheLabel.Text = "Could not read tags from file.";
+        return;
+      }
+
+      try
+      {
+        int counter = 2;
+        string savePath = uploadDirectory + filename;
+
+        while (File.Exists(savePath))
+        {
+          savePath = uploadDirectory + Path.GetFileNameWithoutExtension(filename) + (counter++).ToString()
+            + Path.GetExtension(filename);
+        }
+
+        FileUploader.SaveAs(savePath);
+        TheLabel.Text = "Uploaded file as " + Path.GetFileName(savePath);
+
+        ITrackDatabase trackDb = new PostgresTrackDatabase();
+        t.Filename = savePath;
+        trackDb.AddTrack(t);
+      }
+      catch (Exception ex)
+      {
+        TheLabel.Text = "Could not save file.";
+        Console.Error.WriteLine(ex.Message + ex.StackTrace);
       }
     }
+  }
+}
+
+public class IndexPage : Page
+{
+  public Label TheLabel;
+  public DataGrid QueueData;
+  public void Page_Load(object o, EventArgs e)
+  {
+    ITrackDatabase db = new PostgresTrackDatabase();
+    IStateDatabase stateDb = new PostgresStateDatabase();
+    stateDb.Initialize(db);
+    IScheduler sched = new FIFOScheduler();
+    sched.Initialize(null, stateDb);
+
+    Vote[] queue = sched.GetSchedule();
+    DataView dataView = new DataView();
+    dataView.Table = new DataTable("Queue");
+    dataView.Table.Columns.Add(new DataColumn("Track"));
+    dataView.Table.Columns.Add(new DataColumn("Album"));
+    dataView.Table.Columns.Add(new DataColumn("Length"));
+    foreach (Vote v in queue)
+    {
+      DataRowView rowView = dataView.AddNew();
+      rowView["Track"] = v.ReqTrack.Title;
+      rowView["Album"] = v.ReqTrack.Album;
+      rowView["Length"] = v.ReqTrack.Length.ToString();
+      rowView.EndEdit();
+    }
+    QueueData.DataSource = dataView;
+    QueueData.DataBind();
+    QueueData.Visible = true;
   }
 }
 
@@ -106,5 +230,43 @@ public class LoginPage : Page
         FormsAuthentication.RedirectFromLoginPage(user, false);
       }
     }
+  }
+}
+
+public class MasterPage : System.Web.UI.MasterPage
+{
+  public Label NowPlayingTrack;
+  public Label NowPlayingArtist;
+
+  public void Page_Load(object o, EventArgs e)
+  {
+    ITrackDatabase trackDb = new PostgresTrackDatabase();
+    IStateDatabase stateDb = new PostgresStateDatabase();
+    stateDb.Initialize(trackDb);
+
+    Vote v = stateDb.GetCurrent();
+    NowPlayingTrack.Text = v.ReqTrack.Title;
+    NowPlayingArtist.Text = v.ReqTrack.Artist;
+  }
+
+  public void StartButton_Click(object o, EventArgs e)
+  {
+    // TODO: check is authorized
+
+    Process.Start(ConfigurationManager.AppSettings["StartCommand"], ConfigurationManager.AppSettings["StartArgs"]);
+  }
+
+  public void StopButton_Click(object o, EventArgs e)
+  {
+    // TODO: check is authorized
+
+    Process.Start(ConfigurationManager.AppSettings["StopCommand"], ConfigurationManager.AppSettings["StopArgs"]);
+  }
+
+  public void SkipButton_Click(object o, EventArgs e)
+  {
+    // TODO: check is authorized
+
+    Process.Start(ConfigurationManager.AppSettings["SkipCommand"], ConfigurationManager.AppSettings["SkipArgs"]);
   }
 }
