@@ -88,6 +88,10 @@ namespace Neztu
             Trace.WriteLine(e.ToString());
             throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
           }
+          catch (System.InvalidCastException)
+          {
+            // Sigh
+          }
           finally
           {
             if (dbConn != null)

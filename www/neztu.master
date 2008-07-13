@@ -1,0 +1,29 @@
+<%@ Master Language="C#" Inherits="MasterPage" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head runat="server">
+    <title>Neztu!</title>
+  </head>
+  <body>
+    <div id="header"><asp:Image Id="Banner" SkinId="Banner" runat="server" /></div>
+    <table id="menu">
+      <tr><td><a href="./">Home</a></td><td><a href="playlist">Your Playlist</a></td><td><a href="search">Search Tracks</a></td><td><a href="add">Add Tracks</a></td></tr>
+    </table>
+    <asp:ContentPlaceHolder id="Main" runat="server" />
+    <div id="nowplaying">
+    <form id="NowPlayingForm" runat="server">
+        <table border="0">
+          <tr><th>Now Playing:</th><td>
+          <asp:Label SkinId="NowPlayingTrack" Id="NowPlayingTrack" runat="server" /><br/>
+          <asp:Label SkinId="NowPlayingArtist" Id="NowPlayingArtist" runat="server" />
+          </td></tr>
+          <tr><td colspan="2" style="text-align:center">
+          <asp:Button SkinId="StartButton" Id="StartButton" OnClick="StartButton_Click" Text="Start" runat="server" />
+          <asp:Button SkinId="StopButton" Id="StopButton" OnClick="StopButton_Click" Text="Stop" runat="server" />
+          <asp:Button SkinId="SkipButton" Id="SkipButton" OnClick="SkipButton_Click" Text="Skip" runat="server" />
+          </td></tr>
+        </table>
+      </form>
+    </div>
+  </body>
+</html>

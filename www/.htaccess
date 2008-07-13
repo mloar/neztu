@@ -1,0 +1,15 @@
+AddDefaultCharset utf-8
+<Files login.aspx>
+  AuthType Basic
+  AuthName "Neztu"
+  AuthUserFile /home/matt/devel/neztu/www/.htpasswd
+  require valid-user
+</Files>
+
+RewriteEngine on
+RewriteBase /neztu
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+# This rule allows us to use extensionless paths, in
+# accordance with W3C recommendations.
+RewriteRule ^([^.]+)$ $1.aspx [PT]

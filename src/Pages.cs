@@ -93,6 +93,19 @@ public class PlayListPage : Page
   }
 }
 
+public class SearchPage : Page
+{
+  public TextBox Title;
+  public TextBox Artist;
+  public TextBox Album;
+  public Button Search;
+  public DataGrid ResultsData;
+
+  public void ResultsData_Command(object o, EventArgs e)
+  {
+  }
+}
+
 public class AddPage : Page
 {
   public FileUpload FileUploader;

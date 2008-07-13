@@ -1,3 +1,5 @@
+all: Neztu.dll TagReader.exe Daemon.exe
+
 Neztu.dll: *.cs libs/taglib-sharp/src/taglib-sharp.dll
 	MONO_PATH=libs/taglib-sharp/src gmcs -out:$@ -t:library -r:System.Configuration -r:System.Data -r:System.Web -r:Npgsql -r:taglib-sharp *.cs
 
@@ -12,13 +14,13 @@ libs/PgProviders/PostgreSQLProviders.dll: libs/PgProviders/Properties/Resources.
 	gmcs -target:library -out:$@ -r:Npgsql -r:System.Configuration -r:System.Data -r:System.Web -resource:libs/PgProviders/Properties/Resources.resources,NauckIT.PostgreSQLProvider.Properties.Resources.resources libs/PgProviders/*.cs libs/PgProviders/Properties/*.cs
 
 libs/PgProviders/Properties/Resources.resources: libs/PgProviders/Properties/*.resx
-	resgen2 /compile $^
+	resgen /compile $^
 
 libs/taglib-sharp/src/taglib-sharp.dll: libs/taglib-sharp/Makefile
 	cd libs/taglib-sharp && make
 
 libs/taglib-sharp/Makefile:
-	cd libs/taglib-sharp && ./autogen.sh
+	cd libs/taglib-sharp && ./autogen.sh --disable-docs
 
 install: Neztu.dll libs/taglib-sharp/src/taglib-sharp.dll libs/PgProviders/PostgreSQLProviders.dll
 	install Neztu.dll ../www/bin
