@@ -41,8 +41,6 @@ namespace Neztu
 
   public interface IStateDatabase
   {
-    void Initialize(ITrackDatabase trackDb);
-
     Vote[] GetVotes();
     Vote[] GetVotes(string userName);
     void AddVote(string userName, Guid trackId);

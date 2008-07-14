@@ -6,7 +6,7 @@
   </head>
   <body>
     <div id="header"><asp:Image Id="Banner" SkinId="Banner" runat="server" /></div>
-    <form id="LoginForm" runat="server">
+    <form runat="server">
       <asp:Login ID="LoginControl" runat="server" />
     </form>
   </body>

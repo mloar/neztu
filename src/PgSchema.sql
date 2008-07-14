@@ -102,9 +102,9 @@ ALTER TABLE public."Sessions" OWNER TO "www-data";
 CREATE TABLE "Tracks" (
     "TrackId" character(36) NOT NULL,
     "Filename" character varying(255),
-    "Title" character varying(255),
-    "Artist" character varying(255),
-    "Album" character varying(255),
+    "Title" character varying(255) NOT NULL,
+    "Artist" character varying(255) NOT NULL,
+    "Album" character varying(255) NOT NULL,
     "DiscNumber" integer,
     "TrackNumber" integer,
     "Length" integer,

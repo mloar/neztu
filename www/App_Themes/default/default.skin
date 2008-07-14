@@ -1,1 +1,1 @@
-<asp:Image runat="server" SkinId="Banner" ImageUrl="banner.jpg" />
+<asp:Image runat="server" SkinId="Banner" ImageUrl="banner.jpg" alt="Neztu!"/>

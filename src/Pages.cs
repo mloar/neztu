@@ -4,6 +4,7 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Web.Profile;
 using System.Web.Security;
 using System.Web.UI;
@@ -20,8 +21,7 @@ public class PlayListPage : Page
     if (!IsPostBack)
     {
       ITrackDatabase trackDb = new PostgresTrackDatabase();
-      IStateDatabase stateDb = new PostgresStateDatabase();
-      stateDb.Initialize(trackDb);
+      IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
 
       Vote[] myVotes = stateDb.GetVotes(User.Identity.Name);
 
@@ -47,8 +47,7 @@ public class PlayListPage : Page
   public void PlayListData_Command(object o, DataGridCommandEventArgs e)
   {
     ITrackDatabase trackDb = new PostgresTrackDatabase();
-    IStateDatabase stateDb = new PostgresStateDatabase();
-    stateDb.Initialize(trackDb);
+    IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
 
     Vote[] myVotes = stateDb.GetVotes(User.Identity.Name);
 
@@ -95,14 +94,56 @@ public class PlayListPage : Page
 
 public class SearchPage : Page
 {
-  public TextBox Title;
+  public TextBox SongTitle;
   public TextBox Artist;
   public TextBox Album;
   public Button Search;
+  public Button VoteAll;
   public DataGrid ResultsData;
 
-  public void ResultsData_Command(object o, EventArgs e)
+  public void ResultsData_Command(object o, DataGridCommandEventArgs e)
   {
+    ITrackDatabase trackDb = new PostgresTrackDatabase();
+    IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+    stateDb.AddVote(User.Identity.Name, int.Parse(e.Item.Cells[1].Text));
+  }
+
+  public void VoteAll_Click(object o, EventArgs e)
+  {
+    ITrackDatabase trackDb = new PostgresTrackDatabase();
+    IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+
+    foreach (DataGridItem d in ResultsData.Items)
+    {
+      stateDb.AddVote(User.Identity.Name, int.Parse(d.Cells[1].Text));
+    }
+  }
+
+  public void Search_Click(object o, EventArgs e)
+  {
+    ITrackDatabase trackDb = new PostgresTrackDatabase();
+
+    Track[] tracks = trackDb.GetTracks(SongTitle.Text, Artist.Text, Album.Text);
+
+    DataView dataView = new DataView();
+    dataView.Table = new DataTable("Tracks");
+    dataView.Table.Columns.Add(new DataColumn("TrackId"));
+    dataView.Table.Columns.Add(new DataColumn("Title"));
+    dataView.Table.Columns.Add(new DataColumn("Album"));
+    dataView.Table.Columns.Add(new DataColumn("Length"));
+    foreach (Track t in tracks)
+    {
+      DataRowView rowView = dataView.AddNew();
+      rowView["TrackId"] = t.TrackId;
+      rowView["Title"] = t.Title;
+      rowView["Album"] = t.Album;
+      rowView["Length"] = t.Length.ToString();
+      rowView.EndEdit();
+    }
+
+    ResultsData.DataSource = dataView;
+    ResultsData.DataBind();
+    ResultsData.Visible = true;
   }
 }
 
@@ -174,29 +215,30 @@ public class IndexPage : Page
   public DataGrid QueueData;
   public void Page_Load(object o, EventArgs e)
   {
-    ITrackDatabase db = new PostgresTrackDatabase();
-    IStateDatabase stateDb = new PostgresStateDatabase();
-    stateDb.Initialize(db);
-    IScheduler sched = new FIFOScheduler();
-    sched.Initialize(null, stateDb);
-
-    Vote[] queue = sched.GetSchedule();
-    DataView dataView = new DataView();
-    dataView.Table = new DataTable("Queue");
-    dataView.Table.Columns.Add(new DataColumn("Track"));
-    dataView.Table.Columns.Add(new DataColumn("Album"));
-    dataView.Table.Columns.Add(new DataColumn("Length"));
-    foreach (Vote v in queue)
+    if (!IsPostBack)
     {
-      DataRowView rowView = dataView.AddNew();
-      rowView["Track"] = v.ReqTrack.Title;
-      rowView["Album"] = v.ReqTrack.Album;
-      rowView["Length"] = v.ReqTrack.Length.ToString();
-      rowView.EndEdit();
+      ITrackDatabase trackDb = new PostgresTrackDatabase();
+      IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+      IScheduler sched = new FIFOScheduler(null, stateDb);
+
+      Vote[] queue = sched.GetSchedule();
+      DataView dataView = new DataView();
+      dataView.Table = new DataTable("Queue");
+      dataView.Table.Columns.Add(new DataColumn("Track"));
+      dataView.Table.Columns.Add(new DataColumn("Album"));
+      dataView.Table.Columns.Add(new DataColumn("Length"));
+      foreach (Vote v in queue)
+      {
+        DataRowView rowView = dataView.AddNew();
+        rowView["Track"] = v.ReqTrack.Title;
+        rowView["Album"] = v.ReqTrack.Album;
+        rowView["Length"] = v.ReqTrack.Length.ToString();
+        rowView.EndEdit();
+      }
+      QueueData.DataSource = dataView;
+      QueueData.DataBind();
+      QueueData.Visible = true;
     }
-    QueueData.DataSource = dataView;
-    QueueData.DataBind();
-    QueueData.Visible = true;
   }
 }
 
@@ -251,11 +293,10 @@ public class MasterPage : System.Web.UI.MasterPage
   public Label NowPlayingTrack;
   public Label NowPlayingArtist;
 
-  public void Page_Load(object o, EventArgs e)
+  public void Page_PreRender(object o, EventArgs e)
   {
     ITrackDatabase trackDb = new PostgresTrackDatabase();
-    IStateDatabase stateDb = new PostgresStateDatabase();
-    stateDb.Initialize(trackDb);
+    IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
 
     Vote v = stateDb.GetCurrent();
     NowPlayingTrack.Text = v.ReqTrack.Title;
@@ -281,5 +322,7 @@ public class MasterPage : System.Web.UI.MasterPage
     // TODO: check is authorized
 
     Process.Start(ConfigurationManager.AppSettings["SkipCommand"], ConfigurationManager.AppSettings["SkipArgs"]);
+    // Hack
+    Thread.Sleep(1000);
   }
 }

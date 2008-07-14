@@ -5,13 +5,13 @@
     <title>Neztu!</title>
   </head>
   <body>
-    <div id="header"><asp:Image Id="Banner" SkinId="Banner" runat="server" /></div>
-    <table id="menu">
-      <tr><td><a href="./">Home</a></td><td><a href="playlist">Your Playlist</a></td><td><a href="search">Search Tracks</a></td><td><a href="add">Add Tracks</a></td></tr>
-    </table>
-    <asp:ContentPlaceHolder id="Main" runat="server" />
-    <div id="nowplaying">
-    <form id="NowPlayingForm" runat="server">
+    <form runat="server">
+      <div id="header"><asp:Image Id="Banner" SkinId="Banner" runat="server" /></div>
+      <table id="menu">
+        <tr><td><a href="./">Home</a></td><td><a href="playlist">Your Playlist</a></td><td><a href="search">Search Tracks</a></td><td><a href="add">Add Tracks</a></td></tr>
+      </table>
+      <asp:ContentPlaceHolder id="Main" runat="server" />
+      <div id="nowplaying">
         <table border="0">
           <tr><th>Now Playing:</th><td>
           <asp:Label SkinId="NowPlayingTrack" Id="NowPlayingTrack" runat="server" /><br/>
@@ -23,7 +23,7 @@
           <asp:Button SkinId="SkipButton" Id="SkipButton" OnClick="SkipButton_Click" Text="Skip" runat="server" />
           </td></tr>
         </table>
-      </form>
-    </div>
+      </div>
+    </form>
   </body>
 </html>

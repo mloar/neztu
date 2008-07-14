@@ -4,15 +4,12 @@ namespace Neztu
 {
   public interface IScheduler
   {
-    void Initialize(IRandomSelector randomSelector, IStateDatabase stateDb);
-
     Track PlayNext();
     Vote[] GetSchedule();
   }
 
   public interface IRandomSelector
   {
-    void Initialize(ITrackDatabase trackDb);
     Track GetRandom();
   }
 
@@ -21,7 +18,7 @@ namespace Neztu
     private IRandomSelector m_randomSelector;
     private IStateDatabase m_stateDatabase;
 
-    public void Initialize(IRandomSelector randomSelector, IStateDatabase stateDb)
+    public FIFOScheduler(IRandomSelector randomSelector, IStateDatabase stateDb)
     {
       m_randomSelector = randomSelector;
       m_stateDatabase = stateDb;
@@ -58,7 +55,7 @@ namespace Neztu
     private bool m_dbIsRandomizable;
     private Random m_rng;
 
-    public void Initialize(ITrackDatabase trackDb)
+    public FullyRandomSelector(ITrackDatabase trackDb)
     {
       if (trackDb is IRandomizableTrackDatabase)
       {

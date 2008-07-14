@@ -1,8 +1,8 @@
 using System;
 using System.Collections;
 using System.Configuration;
+using System.Configuration.Provider;
 using System.Data;
-using System.Diagnostics;
 using System.Text;
 using Npgsql;
 using NpgsqlTypes;
@@ -21,8 +21,6 @@ namespace Neztu
 
       if (string.IsNullOrEmpty(connStrName))
       {
-        /*throw new ArgumentOutOfRangeException("TrackDatabaseConnectionStringName",
-          Properties.Resources.ErrArgumentNullOrEmpty);*/
         throw new ArgumentOutOfRangeException("TrackDatabaseConnectionStringName");
       }
       else
@@ -31,7 +29,6 @@ namespace Neztu
 
         if (ConnectionStringSettings == null || string.IsNullOrEmpty(ConnectionStringSettings.ConnectionString.Trim()))
         {
-          //throw new NeztuException(Properties.Resources.ErrConnectionStringNullOrEmpty);
           throw new Exception("Connection String Empty");
         }
 
@@ -85,8 +82,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           catch (System.InvalidCastException)
           {
@@ -150,8 +147,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           finally
           {
@@ -218,8 +215,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           finally
           {
@@ -255,8 +252,8 @@ namespace Neztu
             }
             catch (NpgsqlException e)
             {
-              Trace.WriteLine(e.ToString());
-              throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+              Console.Error.WriteLine(e.ToString());
+              throw new ProviderException("The database operation was aborted (see error log for details).");
             }
             finally
             {
@@ -271,8 +268,7 @@ namespace Neztu
 
     public Track[] GetTracks(string title, string artist, string album)
     {
-      return null;
-    }
+      Queue ret = new Queue();
 
     public Guid AddTrack(Track newTrack)
     {
@@ -282,7 +278,73 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "INSERT INTO \"{0}\" (\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\") VALUES(@TrackId, @Filename, @Artist, @Title, @Album, @DiscNumber, @TrackNumber, @Length, @UserName)",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" WHERE \"Title\" ~ @Title AND \"Artist\" ~ @Artist AND \"Album\" ~ @Album",
+              m_tracksTable);
+
+          dbCommand.Parameters.Add("@Title", NpgsqlDbType.Varchar, 255).Value = title;
+          dbCommand.Parameters.Add("@Artist", NpgsqlDbType.Varchar, 255).Value = artist;
+          dbCommand.Parameters.Add("@Album", NpgsqlDbType.Varchar, 255).Value = album;
+
+          try
+          {
+            dbConn.Open();
+            dbCommand.Prepare();
+
+            using (NpgsqlDataReader reader = dbCommand.ExecuteReader())
+            {
+              while (reader.Read())
+              {
+                System.Console.Error.WriteLine(reader.GetValue(0));
+                Track t;
+                t.TrackId = (uint)(int)reader.GetValue(0));
+                t.Filename = (string)reader.GetValue(1);
+                if (!reader.IsDBNull(2))
+                  t.Artist = (string)reader.GetValue(2);
+                else
+                  t.Artist = string.Empty;
+                if (!reader.IsDBNull(3))
+                  t.Title = (string)reader.GetValue(3);
+                else
+                  t.Title = string.Empty;
+                if (!reader.IsDBNull(4))
+                  t.Album = (string)reader.GetValue(4);
+                else
+                  t.Album = string.Empty;
+                t.DiscNumber = (uint)(int)reader.GetValue(5);
+                t.TrackNumber = (uint)(int)reader.GetValue(6);
+                t.Length = new TimeSpan(0, 0, (int)reader.GetValue(7));
+                t.UserName = (string)reader.GetValue(8);
+
+                ret.Enqueue(t);
+              }
+            }
+          }
+          catch (NpgsqlException e)
+          {
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
+          }
+          finally
+          {
+            if (dbConn != null)
+              dbConn.Close();
+          }
+        }
+      }
+
+      Track[] tracks = new Track[ret.Count];
+      ret.CopyTo(tracks, 0);
+      return tracks;
+    }
+
+    public uint AddTrack(Track newTrack)
+    {
+      using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
+      {
+        using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
+        {
+          dbCommand.CommandText = string.Format(
+              "INSERT INTO \"{0}\" (\"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\") VALUES(@Filename, @Artist, @Title, @Album, @DiscNumber, @TrackNumber, @Length, @UserName)",
               m_tracksTable);
 
           dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = newTrack.TrackId.ToString();
@@ -302,8 +364,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           finally
           {
@@ -333,8 +395,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           finally
           {
@@ -353,7 +415,7 @@ namespace Neztu
     private string m_connectionString = string.Empty;
     private ITrackDatabase m_trackDatabase;
 
-    public PostgresStateDatabase()
+    public PostgresStateDatabase(ITrackDatabase trackDb)
     {
       // Get connection string.
       string connStrName = ConfigurationManager.AppSettings["StateDatabaseConnectionStringName"];
@@ -375,12 +437,8 @@ namespace Neztu
         }
 
         m_connectionString = ConnectionStringSettings.ConnectionString;
+        m_trackDatabase = trackDb;
       }
-    }
-
-    public void Initialize(ITrackDatabase trackDb)
-    {
-      m_trackDatabase = trackDb;
     }
 
     public Vote[] GetVotes(string userName)
@@ -417,8 +475,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           finally
           {
@@ -465,8 +523,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           finally
           {
@@ -502,8 +560,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           finally
           {
@@ -535,8 +593,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           finally
           {
@@ -586,8 +644,8 @@ namespace Neztu
                 catch (NpgsqlException e)
                 {
                   dbTrans.Rollback();
-                  Trace.WriteLine(e.ToString());
-                  throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+                  Console.Error.WriteLine(e.ToString());
+                  throw new ProviderException("The database operation was aborted (see error log for details).");
                 }
               }
             }
@@ -595,8 +653,8 @@ namespace Neztu
         }
         catch (NpgsqlException e)
         {
-          Trace.WriteLine(e.ToString());
-          throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+          Console.Error.WriteLine(e.ToString());
+          throw new ProviderException("The database operation was aborted (see error log for details).");
         }
         finally
         {
@@ -638,8 +696,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           finally
           {
@@ -675,8 +733,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           finally
           {
@@ -727,8 +785,8 @@ namespace Neztu
           }
           catch (NpgsqlException e)
           {
-            Trace.WriteLine(e.ToString());
-            throw new Exception("borken");//ProviderException(Properties.Resources.ErrOperationAborted);
+            Console.Error.WriteLine(e.ToString());
+            throw new ProviderException("The database operation was aborted (see error log for details).");
           }
           finally
           {
