@@ -105,7 +105,14 @@ public class SearchPage : Page
   {
     ITrackDatabase trackDb = new PostgresTrackDatabase();
     IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
-    stateDb.AddVote(User.Identity.Name, int.Parse(e.Item.Cells[1].Text));
+
+    // This is a little kludgey, but it works
+    uint trackId = uint.Parse(e.Item.Cells[1].Text);
+    Track t = trackDb.GetTrack(trackId);
+    if (t.TrackId == trackId)
+      stateDb.AddVote(User.Identity.Name, trackId);
+
+    ((MasterPage)Master).StatusBar.Text = string.Format("Voted for {0}.", t.Title);
   }
 
   public void VoteAll_Click(object o, EventArgs e)
@@ -115,8 +122,14 @@ public class SearchPage : Page
 
     foreach (DataGridItem d in ResultsData.Items)
     {
-      stateDb.AddVote(User.Identity.Name, int.Parse(d.Cells[1].Text));
+      // This is a little kludgey, but it works
+      uint trackId = uint.Parse(d.Cells[1].Text);
+      Track t = trackDb.GetTrack(trackId);
+      if (t.TrackId == trackId)
+        stateDb.AddVote(User.Identity.Name, trackId);
     }
+
+    ((MasterPage)Master).StatusBar.Text = string.Format("Voted for {0} tracks.", ResultsData.Items.Count);
   }
 
   public void Search_Click(object o, EventArgs e)
@@ -124,6 +137,19 @@ public class SearchPage : Page
     ITrackDatabase trackDb = new PostgresTrackDatabase();
 
     Track[] tracks = trackDb.GetTracks(SongTitle.Text, Artist.Text, Album.Text);
+    if (tracks.Length == 0)
+    {
+      ((MasterPage)Master).StatusBar.Text = "0 tracks found.  You apparently have bad taste in music.";
+      ResultsData.Visible = false;
+      VoteAll.Visible = false;
+      return;
+    }
+    else
+    {
+      ((MasterPage)Master).StatusBar.Text = string.Format("Showing {0} tracks.", tracks.Length);
+      ResultsData.Visible = true;
+      VoteAll.Visible = true;
+    }
 
     DataView dataView = new DataView();
     dataView.Table = new DataTable("Tracks");
@@ -143,7 +169,6 @@ public class SearchPage : Page
 
     ResultsData.DataSource = dataView;
     ResultsData.DataBind();
-    ResultsData.Visible = true;
   }
 }
 
@@ -290,6 +315,7 @@ public class LoginPage : Page
 
 public class MasterPage : System.Web.UI.MasterPage
 {
+  public Label StatusBar;
   public Label NowPlayingTrack;
   public Label NowPlayingArtist;
 
@@ -299,8 +325,16 @@ public class MasterPage : System.Web.UI.MasterPage
     IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
 
     Vote v = stateDb.GetCurrent();
-    NowPlayingTrack.Text = v.ReqTrack.Title;
-    NowPlayingArtist.Text = v.ReqTrack.Artist;
+    if (v.ReqTrack.TrackId == 0)
+    {
+      NowPlayingTrack.Text = "";
+      NowPlayingArtist.Text = "";
+    }
+    else
+    {
+      NowPlayingTrack.Text = v.ReqTrack.Title;
+      NowPlayingArtist.Text = v.ReqTrack.Artist;
+    }
   }
 
   public void StartButton_Click(object o, EventArgs e)
@@ -308,11 +342,16 @@ public class MasterPage : System.Web.UI.MasterPage
     // TODO: check is authorized
 
     Process.Start(ConfigurationManager.AppSettings["StartCommand"], ConfigurationManager.AppSettings["StartArgs"]);
+    // Hack to get proper "Now Playing" output
+    Thread.Sleep(1000);
   }
 
   public void StopButton_Click(object o, EventArgs e)
   {
     // TODO: check is authorized
+    ITrackDatabase trackDb = new PostgresTrackDatabase();
+    IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+    stateDb.AddVote(string.Empty, 0);
 
     Process.Start(ConfigurationManager.AppSettings["StopCommand"], ConfigurationManager.AppSettings["StopArgs"]);
   }
@@ -322,7 +361,7 @@ public class MasterPage : System.Web.UI.MasterPage
     // TODO: check is authorized
 
     Process.Start(ConfigurationManager.AppSettings["SkipCommand"], ConfigurationManager.AppSettings["SkipArgs"]);
-    // Hack
+    // Hack to get proper "Now Playing" output
     Thread.Sleep(1000);
   }
 }

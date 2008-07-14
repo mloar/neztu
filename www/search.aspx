@@ -8,10 +8,10 @@
     <td><asp:Button id="Search" OnClick="Search_Click" Text="Search" runat="server" /></td>
   </tr>
   </table>
-  <asp:DataGrid id="ResultsData" OnItemCommand="ResultsData_Command" runat="server">
+  <asp:DataGrid id="ResultsData" OnItemCommand="ResultsData_Command" visible="false" runat="server">
     <columns>
       <asp:ButtonColumn Text="Vote" CommandName="Vote"/>
     </columns>
   </asp:DataGrid>
-  <asp:Button id="VoteAll" OnClick="VoteAll_Click" Text="Vote All" runat="server" />
+  <asp:Button id="VoteAll" OnClick="VoteAll_Click" Text="Vote All" visible="false" runat="server" />
 </asp:Content>

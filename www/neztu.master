@@ -11,6 +11,7 @@
         <tr><td><a href="./">Home</a></td><td><a href="playlist">Your Playlist</a></td><td><a href="search">Search Tracks</a></td><td><a href="add">Add Tracks</a></td></tr>
       </table>
       <asp:ContentPlaceHolder id="Main" runat="server" />
+      <div id="statusbar"><asp:Label SkinId="StatusBar" Id="StatusBar" runat="server" /></div>
       <div id="nowplaying">
         <table border="0">
           <tr><th>Now Playing:</th><td>

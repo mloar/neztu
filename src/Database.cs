@@ -5,7 +5,7 @@ namespace Neztu
 {
   public struct Track
   {
-    public Guid TrackId;
+    public uint TrackId;
     public string Filename;
     public string Title;
     public string Artist;
@@ -25,13 +25,13 @@ namespace Neztu
 
   public interface ITrackDatabase
   {
-    Track GetTrack(Guid trackId);
+    Track GetTrack(uint trackId);
     Track[] GetTracks(string title, string artist, string album);
     Track[] GetTracks();
     DataView GetTrackView();
 
-    Guid AddTrack(Track newTrack);
-    void RemoveTrack(Guid trackId);
+    uint AddTrack(Track newTrack);
+    void RemoveTrack(uint trackId);
   }
 
   public interface IRandomizableTrackDatabase : ITrackDatabase
@@ -43,12 +43,12 @@ namespace Neztu
   {
     Vote[] GetVotes();
     Vote[] GetVotes(string userName);
-    void AddVote(string userName, Guid trackId);
-    void RemoveVote(string userName, Guid trackId);
+    void AddVote(string userName, uint trackId);
+    void RemoveVote(string userName, uint trackId);
     void SwapVotes(Vote vote1, Vote vote2);
 
     Vote[] GetHistory();
-    void AddHistory(string userName, Guid trackId);
+    void AddHistory(string userName, uint trackId);
     Vote GetCurrent();
   }
 }

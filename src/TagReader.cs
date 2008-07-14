@@ -52,9 +52,20 @@ namespace Neztu
 
       foreach (string arg in args)
       {
-        Track t = ReadFile(arg);
-        t.UserName = string.Empty;
-        db.AddTrack(t);
+        try
+        {
+          Track t = ReadFile(arg);
+          t.UserName = string.Empty;
+          db.AddTrack(t);
+        }
+        catch (TagLib.CorruptFileException)
+        {
+          Console.Error.WriteLine("{0} could not be read.  Skipping.", arg);
+        }
+        catch (PostgresBackendException)
+        {
+          Console.Error.WriteLine("Database error occurred trying to add {0}.  Skipping.", arg);
+        }
       }
     }
 
@@ -64,11 +75,11 @@ namespace Neztu
         Tag tag = file.GetTag(TagTypes.Id3v2);
         Track ret;
 
-        ret.TrackId = Guid.Empty;
-        ret.Filename = filename;
-        ret.Title = tag.Title;
-        ret.Artist = tag.FirstPerformer;
-        ret.Album = tag.Album;
+        ret.TrackId = 0;
+        ret.Filename = System.IO.Path.GetFullPath(filename);
+        ret.Title = tag.Title == null ? "" : tag.Title;
+        ret.Artist = tag.FirstPerformer == null ? "" : tag.FirstPerformer;
+        ret.Album = tag.Album == null ? "" : tag.Album;
         ret.DiscNumber = tag.Disc;
         ret.TrackNumber = tag.Track;
         ret.Length = file.Properties.Duration;
@@ -83,11 +94,11 @@ namespace Neztu
         Tag tag = file.GetTag(TagTypes.Id3v2);
         Track ret;
 
-        ret.TrackId = Guid.Empty;
+        ret.TrackId = 0;
         ret.Filename = null;
-        ret.Title = tag.Title;
-        ret.Artist = tag.FirstPerformer;
-        ret.Album = tag.Album;
+        ret.Title = tag.Title == null ? "" : tag.Title;
+        ret.Artist = tag.FirstPerformer == null ? "" : tag.FirstPerformer;
+        ret.Album = tag.Album == null ? "" : tag.Album;
         ret.DiscNumber = tag.Disc;
         ret.TrackNumber = tag.Track;
         ret.Length = file.Properties.Duration;

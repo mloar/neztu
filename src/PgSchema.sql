@@ -24,8 +24,8 @@ SET default_with_oids = false;
 --
 
 CREATE TABLE "History" (
-    "UserId" character(36) NOT NULL,
-    "TrackId" character(36) NOT NULL,
+    "UserName" character varying(255) NOT NULL,
+    "TrackId" integer NOT NULL,
     "Timestamp" timestamp without time zone NOT NULL
 );
 
@@ -100,7 +100,7 @@ ALTER TABLE public."Sessions" OWNER TO "www-data";
 --
 
 CREATE TABLE "Tracks" (
-    "TrackId" character(36) NOT NULL,
+    "TrackId" SERIAL,
     "Filename" character varying(255),
     "Title" character varying(255) NOT NULL,
     "Artist" character varying(255) NOT NULL,
@@ -108,25 +108,11 @@ CREATE TABLE "Tracks" (
     "DiscNumber" integer,
     "TrackNumber" integer,
     "Length" integer,
-    "UserId" character(36)
+    "UserName" character varying(255)
 );
 
 
 ALTER TABLE public."Tracks" OWNER TO "www-data";
-
---
--- Name: Tracks_TrackId_seq; Type: SEQUENCE; Schema: public; Owner: www-data
---
-
-CREATE SEQUENCE "Tracks_TrackId_seq"
-    START WITH 1
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public."Tracks_TrackId_seq" OWNER TO "www-data";
 
 --
 -- Name: Users; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
@@ -176,8 +162,8 @@ ALTER TABLE public."UsersInRoles" OWNER TO "www-data";
 --
 
 CREATE TABLE "Votes" (
-    "UserId" character(36) NOT NULL,
-    "TrackId" character(36) NOT NULL,
+    "UserName" character varying(255) NOT NULL,
+    "TrackId" integer  NOT NULL,
     "Timestamp" timestamp without time zone
 );
 
@@ -213,7 +199,7 @@ ALTER TABLE ONLY "Tracks"
 --
 
 ALTER TABLE ONLY "Votes"
-    ADD CONSTRAINT "Votes_pkey" PRIMARY KEY ("UserId", "TrackId");
+    ADD CONSTRAINT "Votes_pkey" PRIMARY KEY ("UserName", "TrackId");
 
 
 --

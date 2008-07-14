@@ -1,7 +1,7 @@
 all: Neztu.dll TagReader.exe Daemon.exe
 
 Neztu.dll: *.cs libs/taglib-sharp/src/taglib-sharp.dll
-	MONO_PATH=libs/taglib-sharp/src gmcs -out:$@ -t:library -r:System.Configuration -r:System.Data -r:System.Web -r:Npgsql -r:taglib-sharp *.cs
+	MONO_PATH=libs/taglib-sharp/src gmcs -out:$@ -debug:full -t:library -r:System.Configuration -r:System.Data -r:System.Web -r:Npgsql -r:taglib-sharp *.cs
 
 TagReader.exe: TagReader.cs Database.cs PostgresBackend.cs
 	MONO_PATH=libs/taglib-sharp/src gmcs -out:$@ -t:exe -debug:full -r:System.Configuration -r:System.Data -r:Npgsql -r:taglib-sharp $^
@@ -11,7 +11,7 @@ Daemon.exe: Daemon.cs Database.cs PostgresBackend.cs Scheduler.cs
 
 libs/PgProviders/PostgreSQLProviders.dll: libs/PgProviders/Properties/Resources.resources libs/PgProviders/*.cs libs/PgProviders/Properties/*.cs
 	-patch -p0 -N -s < PgProviders.patch
-	gmcs -target:library -out:$@ -r:Npgsql -r:System.Configuration -r:System.Data -r:System.Web -resource:libs/PgProviders/Properties/Resources.resources,NauckIT.PostgreSQLProvider.Properties.Resources.resources libs/PgProviders/*.cs libs/PgProviders/Properties/*.cs
+	gmcs -target:library -out:$@ -debug:full -r:Npgsql -r:System.Configuration -r:System.Data -r:System.Web -resource:libs/PgProviders/Properties/Resources.resources,NauckIT.PostgreSQLProvider.Properties.Resources.resources libs/PgProviders/*.cs libs/PgProviders/Properties/*.cs
 
 libs/PgProviders/Properties/Resources.resources: libs/PgProviders/Properties/*.resx
 	resgen /compile $^
