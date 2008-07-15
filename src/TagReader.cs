@@ -1,3 +1,14 @@
+//+----------------------------------------------------------------------------
+//
+//  Copyright (c) 2008 Matthew Loar.
+//  See COPYING for license terms.
+//
+//  Abstract:
+//      A simple application for importing existing files into the track
+//      database.
+//
+//-----------------------------------------------------------------------------
+
 using System;
 using TagLib;
 

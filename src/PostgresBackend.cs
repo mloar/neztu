@@ -1,3 +1,13 @@
+//+----------------------------------------------------------------------------
+//
+//  Copyright (c) 2008 Matthew Loar.
+//  See COPYING for license terms.
+//
+//  Abstract:
+//      Implements a PostgreSQL database backend.
+//
+//-----------------------------------------------------------------------------
+
 using System;
 using System.Collections;
 using System.Configuration;

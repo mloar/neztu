@@ -1,3 +1,14 @@
+//+----------------------------------------------------------------------------
+//
+//  Copyright (c) 2008 Matthew Loar.
+//  See COPYING for license terms.
+//
+//  Abstract:
+//      Defines the IScheduler and IRandomSelector interfaces, and provides
+//      several implementations.
+//
+//-----------------------------------------------------------------------------
+
 using System;
 
 namespace Neztu

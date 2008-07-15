@@ -1,3 +1,13 @@
+//+----------------------------------------------------------------------------
+//
+//  Copyright (c) 2008 Matthew Loar.
+//  See COPYING for license terms.
+//
+//  Abstract:
+//      Implements the daemon which plays tracks.
+//
+//-----------------------------------------------------------------------------
+
 using System;
 using System.Configuration;
 using System.Diagnostics;

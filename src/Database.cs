@@ -1,3 +1,13 @@
+//+----------------------------------------------------------------------------
+//
+//  Copyright (c) 2008 Matthew Loar.
+//  See COPYING for license terms.
+//
+//  Abstract:
+//      Contains structures and interfaces for the generic database interface.
+//
+//-----------------------------------------------------------------------------
+
 using System;
 using System.Data;
 
