@@ -304,7 +304,7 @@ public class LoginPage : Page
             password += b;
           }
 
-          Membership.CreateUser(Context.User.Identity.Name, password);
+          Membership.CreateUser(user, password);
         }
 
         FormsAuthentication.RedirectFromLoginPage(user, false);
@@ -351,7 +351,7 @@ public class MasterPage : System.Web.UI.MasterPage
     // TODO: check is authorized
     ITrackDatabase trackDb = new PostgresTrackDatabase();
     IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
-    stateDb.AddVote(string.Empty, 0);
+    stateDb.AddHistory(string.Empty, 0);
 
     Process.Start(ConfigurationManager.AppSettings["StopCommand"], ConfigurationManager.AppSettings["StopArgs"]);
   }
