@@ -9,7 +9,9 @@
 //-----------------------------------------------------------------------------
 
 using System;
+using System.Configuration;
 using System.Data;
+using System.Reflection;
 
 namespace Neztu
 {
@@ -60,5 +62,41 @@ namespace Neztu
     Vote[] GetHistory();
     void AddHistory(string userName, uint trackId);
     Vote GetCurrent();
+  }
+
+  public interface IDatabaseFactory
+  {
+    ITrackDatabase GetTrackDatabase();
+    IStateDatabase GetStateDatabase();
+  }
+
+  public class DatabaseHelper
+  {
+    private static IDatabaseFactory GetFactory()
+    {
+      string factoryType = ConfigurationManager.AppSettings["DatabaseFactoryType"];
+      if (factoryType == null)
+      {
+        throw new Exception("Database factory type not specified");
+      }
+
+      Type type = Type.GetType(factoryType);
+      if (type == null)
+      {
+        throw new Exception("Could not find database factory type");
+      }
+
+      return (IDatabaseFactory)type.InvokeMember(null, BindingFlags.CreateInstance, null, null, null);
+    }
+
+    public static ITrackDatabase GetTrackDatabase()
+    {
+      return GetFactory().GetTrackDatabase();
+    }
+
+    public static IStateDatabase GetStateDatabase()
+    {
+      return GetFactory().GetStateDatabase();
+    }
   }
 }

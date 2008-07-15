@@ -828,4 +828,17 @@ namespace Neztu
       return ret;
     }
   }
+
+  public class PostgresDatabaseFactory : IDatabaseFactory
+  {
+    public ITrackDatabase GetTrackDatabase()
+    {
+      return new PostgresTrackDatabase();
+    }
+
+    public IStateDatabase GetStateDatabase()
+    {
+      return new PostgresStateDatabase(new PostgresTrackDatabase());
+    }
+  }
 }

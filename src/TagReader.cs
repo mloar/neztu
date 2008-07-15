@@ -59,7 +59,7 @@ namespace Neztu
 
     public static void Main(string[] args)
     {
-      ITrackDatabase db = new PostgresTrackDatabase();
+      ITrackDatabase db = DatabaseHelper.GetTrackDatabase();
 
       foreach (string arg in args)
       {

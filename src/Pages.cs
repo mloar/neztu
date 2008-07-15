@@ -30,8 +30,7 @@ public class PlayListPage : Page
   {
     if (!IsPostBack)
     {
-      ITrackDatabase trackDb = new PostgresTrackDatabase();
-      IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+      IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
 
       Vote[] myVotes = stateDb.GetVotes(User.Identity.Name);
 
@@ -56,8 +55,7 @@ public class PlayListPage : Page
 
   public void PlayListData_Command(object o, DataGridCommandEventArgs e)
   {
-    ITrackDatabase trackDb = new PostgresTrackDatabase();
-    IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+    IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
 
     Vote[] myVotes = stateDb.GetVotes(User.Identity.Name);
 
@@ -113,8 +111,8 @@ public class SearchPage : Page
 
   public void ResultsData_Command(object o, DataGridCommandEventArgs e)
   {
-    ITrackDatabase trackDb = new PostgresTrackDatabase();
-    IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+    ITrackDatabase trackDb = DatabaseHelper.GetTrackDatabase();
+    IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
 
     // This is a little kludgey, but it works
     uint trackId = uint.Parse(e.Item.Cells[1].Text);
@@ -127,8 +125,8 @@ public class SearchPage : Page
 
   public void VoteAll_Click(object o, EventArgs e)
   {
-    ITrackDatabase trackDb = new PostgresTrackDatabase();
-    IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+    ITrackDatabase trackDb = DatabaseHelper.GetTrackDatabase();
+    IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
 
     foreach (DataGridItem d in ResultsData.Items)
     {
@@ -144,7 +142,7 @@ public class SearchPage : Page
 
   public void Search_Click(object o, EventArgs e)
   {
-    ITrackDatabase trackDb = new PostgresTrackDatabase();
+    ITrackDatabase trackDb = DatabaseHelper.GetTrackDatabase();
 
     Track[] tracks = trackDb.GetTracks(SongTitle.Text, Artist.Text, Album.Text);
     if (tracks.Length == 0)
@@ -231,7 +229,7 @@ public class AddPage : Page
         FileUploader.SaveAs(savePath);
         TheLabel.Text = "Uploaded file as " + Path.GetFileName(savePath);
 
-        ITrackDatabase trackDb = new PostgresTrackDatabase();
+        ITrackDatabase trackDb = DatabaseHelper.GetTrackDatabase();
         t.Filename = savePath;
         trackDb.AddTrack(t);
       }
@@ -252,8 +250,7 @@ public class IndexPage : Page
   {
     if (!IsPostBack)
     {
-      ITrackDatabase trackDb = new PostgresTrackDatabase();
-      IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+      IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
       IScheduler sched = new FIFOScheduler(null, stateDb);
 
       Vote[] queue = sched.GetSchedule();
@@ -331,8 +328,7 @@ public class MasterPage : System.Web.UI.MasterPage
 
   public void Page_PreRender(object o, EventArgs e)
   {
-    ITrackDatabase trackDb = new PostgresTrackDatabase();
-    IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+    IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
 
     Vote v = stateDb.GetCurrent();
     if (v.ReqTrack.TrackId == 0)
@@ -359,8 +355,7 @@ public class MasterPage : System.Web.UI.MasterPage
   public void StopButton_Click(object o, EventArgs e)
   {
     // TODO: check is authorized
-    ITrackDatabase trackDb = new PostgresTrackDatabase();
-    IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+    IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
     stateDb.AddHistory(string.Empty, 0);
 
     Process.Start(ConfigurationManager.AppSettings["StopCommand"], ConfigurationManager.AppSettings["StopArgs"]);

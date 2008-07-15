@@ -25,8 +25,8 @@ namespace Neztu
         return 1;
       }
 
-      ITrackDatabase trackDb = new PostgresTrackDatabase();
-      IStateDatabase stateDb = new PostgresStateDatabase(trackDb);
+      ITrackDatabase trackDb = DatabaseHelper.GetTrackDatabase();
+      IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
       IRandomSelector randSel = new FullyRandomSelector(trackDb);
       IScheduler s = new FIFOScheduler(randSel, stateDb);
 
