@@ -101,14 +101,15 @@ ALTER TABLE public."Sessions" OWNER TO "www-data";
 
 CREATE TABLE "Tracks" (
     "TrackId" SERIAL,
-    "Filename" character varying(255),
+    "Filename" character varying(255) NOT NULL,
     "Title" character varying(255) NOT NULL,
     "Artist" character varying(255) NOT NULL,
     "Album" character varying(255) NOT NULL,
+    "Genre" character varying(255) NOT NULL,
     "DiscNumber" integer,
     "TrackNumber" integer,
     "Length" integer,
-    "UserName" character varying(255)
+    "UserName" character varying(255) NOT NULL
 );
 
 
@@ -293,6 +294,27 @@ CREATE INDEX users_email_index ON "Users" USING btree ("Email");
 --
 
 CREATE INDEX users_islockedout_index ON "Users" USING btree ("IsLockedOut");
+
+
+--
+-- Name: tracks_title_index; Type: INDEX; Schema: public; Owner: www-data; Tablespace: 
+--
+
+CREATE INDEX tracks_title_index ON "Tracks" USING btree ("Title");
+
+
+--
+-- Name: tracks_artist_index; Type: INDEX; Schema: public; Owner: www-data; Tablespace: 
+--
+
+CREATE INDEX tracks_artist_index ON "Tracks" USING btree ("Artist");
+
+
+--
+-- Name: tracks_album_index; Type: INDEX; Schema: public; Owner: www-data; Tablespace: 
+--
+
+CREATE INDEX tracks_album_index ON "Tracks" USING btree ("Album");
 
 
 --

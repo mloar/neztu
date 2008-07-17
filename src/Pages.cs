@@ -30,9 +30,9 @@ public class PlayListPage : Page
   {
     if (!IsPostBack)
     {
-      IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
+      INeztuDatabase database = DatabaseHelper.GetDatabase();
 
-      Vote[] myVotes = stateDb.GetVotes(User.Identity.Name);
+      Vote[] myVotes = database.GetVotes(User.Identity.Name);
 
       DataView dataView = new DataView();
       dataView.Table = new DataTable("PlayList");
@@ -55,30 +55,30 @@ public class PlayListPage : Page
 
   public void PlayListData_Command(object o, DataGridCommandEventArgs e)
   {
-    IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
+    INeztuDatabase database = DatabaseHelper.GetDatabase();
 
-    Vote[] myVotes = stateDb.GetVotes(User.Identity.Name);
+    Vote[] myVotes = database.GetVotes(User.Identity.Name);
 
     switch(((LinkButton)e.CommandSource).CommandName)
     {
       case "Up":
         if (e.Item.ItemIndex > 0)
         {
-          stateDb.SwapVotes(myVotes[e.Item.ItemIndex], myVotes[e.Item.ItemIndex - 1]);
+          database.SwapVotes(myVotes[e.Item.ItemIndex], myVotes[e.Item.ItemIndex - 1]);
         }
       break;
       case "Down":
         if (e.Item.ItemIndex < myVotes.Length - 1)
         {
-          stateDb.SwapVotes(myVotes[e.Item.ItemIndex], myVotes[e.Item.ItemIndex + 1]);
+          database.SwapVotes(myVotes[e.Item.ItemIndex], myVotes[e.Item.ItemIndex + 1]);
         }
       break;
       case "Remove":
-        stateDb.RemoveVote(myVotes[e.Item.ItemIndex].UserName, myVotes[e.Item.ItemIndex].ReqTrack.TrackId);
+        database.RemoveVote(myVotes[e.Item.ItemIndex].UserName, myVotes[e.Item.ItemIndex].ReqTrack.TrackId);
       break;
     }
 
-    myVotes = stateDb.GetVotes(User.Identity.Name);
+    myVotes = database.GetVotes(User.Identity.Name);
 
     DataView dataView = new DataView();
     dataView.Table = new DataTable("PlayList");
@@ -102,6 +102,7 @@ public class PlayListPage : Page
 
 public class SearchPage : Page
 {
+  public Label StatusBar;
   public TextBox SongTitle;
   public TextBox Artist;
   public TextBox Album;
@@ -111,50 +112,48 @@ public class SearchPage : Page
 
   public void ResultsData_Command(object o, DataGridCommandEventArgs e)
   {
-    ITrackDatabase trackDb = DatabaseHelper.GetTrackDatabase();
-    IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
+    INeztuDatabase database = DatabaseHelper.GetDatabase();
 
     // This is a little kludgey, but it works
     uint trackId = uint.Parse(e.Item.Cells[1].Text);
-    Track t = trackDb.GetTrack(trackId);
+    Track t = database.GetTrack(trackId);
     if (t.TrackId == trackId)
-      stateDb.AddVote(User.Identity.Name, trackId);
+      database.AddVote(User.Identity.Name, trackId);
 
-    ((MasterPage)Master).StatusBar.Text = string.Format("Voted for {0}.", t.Title);
+    StatusBar.Text = string.Format("Voted for {0}.", t.Title);
   }
 
   public void VoteAll_Click(object o, EventArgs e)
   {
-    ITrackDatabase trackDb = DatabaseHelper.GetTrackDatabase();
-    IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
+    INeztuDatabase database = DatabaseHelper.GetDatabase();
 
     foreach (DataGridItem d in ResultsData.Items)
     {
       // This is a little kludgey, but it works
       uint trackId = uint.Parse(d.Cells[1].Text);
-      Track t = trackDb.GetTrack(trackId);
+      Track t = database.GetTrack(trackId);
       if (t.TrackId == trackId)
-        stateDb.AddVote(User.Identity.Name, trackId);
+        database.AddVote(User.Identity.Name, trackId);
     }
 
-    ((MasterPage)Master).StatusBar.Text = string.Format("Voted for {0} tracks.", ResultsData.Items.Count);
+    StatusBar.Text = string.Format("Voted for {0} tracks.", ResultsData.Items.Count);
   }
 
   public void Search_Click(object o, EventArgs e)
   {
-    ITrackDatabase trackDb = DatabaseHelper.GetTrackDatabase();
+    INeztuDatabase database = DatabaseHelper.GetDatabase();
 
-    Track[] tracks = trackDb.GetTracks(SongTitle.Text, Artist.Text, Album.Text);
+    Track[] tracks = database.GetTracks(SongTitle.Text, Artist.Text, Album.Text);
     if (tracks.Length == 0)
     {
-      ((MasterPage)Master).StatusBar.Text = "0 tracks found.  You apparently have bad taste in music.";
+      StatusBar.Text = "0 tracks found.  You apparently have bad taste in music.";
       ResultsData.Visible = false;
       VoteAll.Visible = false;
       return;
     }
     else
     {
-      ((MasterPage)Master).StatusBar.Text = string.Format("Showing {0} tracks.", tracks.Length);
+      StatusBar.Text = string.Format("Showing {0} tracks.", tracks.Length);
       ResultsData.Visible = true;
       VoteAll.Visible = true;
     }
@@ -184,10 +183,16 @@ public class AddPage : Page
 {
   public FileUpload FileUploader;
   public Button UploadButton;
-  public Label TheLabel;
   public HtmlForm UploadForm;
+  public Panel UploadPanel;
+  public Label StatusBar;
+
   public void Page_Load(object o, EventArgs e)
   {
+    if (!IsPostBack)
+    {
+      UploadPanel.Visible = (ConfigurationManager.AppSettings["UploadDirectory"] != null);
+    }
   }
 
   public void UploadButton_Click(object o, EventArgs e)
@@ -211,7 +216,7 @@ public class AddPage : Page
       }
       catch (Exception)
       {
-        TheLabel.Text = "Could not read tags from file.";
+        StatusBar.Text = "Could not read tags from file.";
         return;
       }
 
@@ -227,15 +232,15 @@ public class AddPage : Page
         }
 
         FileUploader.SaveAs(savePath);
-        TheLabel.Text = "Uploaded file as " + Path.GetFileName(savePath);
+        StatusBar.Text = "Uploaded file as " + Path.GetFileName(savePath);
 
-        ITrackDatabase trackDb = DatabaseHelper.GetTrackDatabase();
+        INeztuDatabase database = DatabaseHelper.GetDatabase();
         t.Filename = savePath;
-        trackDb.AddTrack(t);
+        database.AddTrack(t);
       }
       catch (Exception ex)
       {
-        TheLabel.Text = "Could not save file.";
+        StatusBar.Text = "Could not save file.";
         Console.Error.WriteLine(ex.Message + ex.StackTrace);
       }
     }
@@ -244,32 +249,43 @@ public class AddPage : Page
 
 public class IndexPage : Page
 {
-  public Label TheLabel;
   public DataGrid QueueData;
+  public Label StatusBar;
   public void Page_Load(object o, EventArgs e)
   {
     if (!IsPostBack)
     {
-      IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
-      IScheduler sched = new FIFOScheduler(null, stateDb);
+      INeztuDatabase database = DatabaseHelper.GetDatabase();
+      IScheduler sched = new FIFOScheduler(null, database);
 
       Vote[] queue = sched.GetSchedule();
-      DataView dataView = new DataView();
-      dataView.Table = new DataTable("Queue");
-      dataView.Table.Columns.Add(new DataColumn("Track"));
-      dataView.Table.Columns.Add(new DataColumn("Album"));
-      dataView.Table.Columns.Add(new DataColumn("Length"));
-      foreach (Vote v in queue)
+      if (queue.Length > 0)
       {
-        DataRowView rowView = dataView.AddNew();
-        rowView["Track"] = v.ReqTrack.Title;
-        rowView["Album"] = v.ReqTrack.Album;
-        rowView["Length"] = v.ReqTrack.Length.ToString();
-        rowView.EndEdit();
+        DataView dataView = new DataView();
+        dataView.Table = new DataTable("Queue");
+        dataView.Table.Columns.Add(new DataColumn("Track"));
+        dataView.Table.Columns.Add(new DataColumn("Album"));
+        dataView.Table.Columns.Add(new DataColumn("Length"));
+        dataView.Table.Columns.Add(new DataColumn("Requested By"));
+        foreach (Vote v in queue)
+        {
+          DataRowView rowView = dataView.AddNew();
+          rowView["Track"] = v.ReqTrack.Title;
+          rowView["Album"] = v.ReqTrack.Album;
+          rowView["Length"] = v.ReqTrack.Length.ToString();
+          rowView["Requested By"] = v.UserName;
+          rowView.EndEdit();
+        }
+        QueueData.DataSource = dataView;
+        QueueData.DataBind();
+        QueueData.Visible = true;
+        StatusBar.Text = string.Empty;
       }
-      QueueData.DataSource = dataView;
-      QueueData.DataBind();
-      QueueData.Visible = true;
+      else
+      {
+        QueueData.Visible = false;
+        StatusBar.Text = "No requests in the queue!";
+      }
     }
   }
 }
@@ -322,15 +338,15 @@ public class LoginPage : Page
 
 public class MasterPage : System.Web.UI.MasterPage
 {
-  public Label StatusBar;
+  public Panel DaemonControls;
   public Label NowPlayingTrack;
   public Label NowPlayingArtist;
 
   public void Page_PreRender(object o, EventArgs e)
   {
-    IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
+    INeztuDatabase database = DatabaseHelper.GetDatabase();
 
-    Vote v = stateDb.GetCurrent();
+    Vote v = database.GetCurrent();
     if (v.ReqTrack.TrackId == 0)
     {
       NowPlayingTrack.Text = "";
@@ -341,32 +357,38 @@ public class MasterPage : System.Web.UI.MasterPage
       NowPlayingTrack.Text = v.ReqTrack.Title;
       NowPlayingArtist.Text = v.ReqTrack.Artist;
     }
+
+    DaemonControls.Visible = Context.User.IsInRole("Administrators");
   }
 
   public void StartButton_Click(object o, EventArgs e)
   {
-    // TODO: check is authorized
-
-    Process.Start(ConfigurationManager.AppSettings["StartCommand"], ConfigurationManager.AppSettings["StartArgs"]);
-    // Hack to get proper "Now Playing" output
-    Thread.Sleep(1000);
+    if (Context.User.IsInRole("Administrators"))
+    {
+      Process.Start(ConfigurationManager.AppSettings["StartCommand"], ConfigurationManager.AppSettings["StartArgs"]);
+      // Hack to get proper "Now Playing" output
+      Thread.Sleep(1000);
+    }
   }
 
   public void StopButton_Click(object o, EventArgs e)
   {
-    // TODO: check is authorized
-    IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
-    stateDb.AddHistory(string.Empty, 0);
+    if (Context.User.IsInRole("Administrators"))
+    {
+      INeztuDatabase database = DatabaseHelper.GetDatabase();
+      database.AddHistory(string.Empty, 0);
 
-    Process.Start(ConfigurationManager.AppSettings["StopCommand"], ConfigurationManager.AppSettings["StopArgs"]);
+      Process.Start(ConfigurationManager.AppSettings["StopCommand"], ConfigurationManager.AppSettings["StopArgs"]);
+    }
   }
 
   public void SkipButton_Click(object o, EventArgs e)
   {
-    // TODO: check is authorized
-
-    Process.Start(ConfigurationManager.AppSettings["SkipCommand"], ConfigurationManager.AppSettings["SkipArgs"]);
-    // Hack to get proper "Now Playing" output
-    Thread.Sleep(1000);
+    if (Context.User.IsInRole("Administrators"))
+    {
+      Process.Start(ConfigurationManager.AppSettings["SkipCommand"], ConfigurationManager.AppSettings["SkipArgs"]);
+      // Hack to get proper "Now Playing" output
+      Thread.Sleep(1000);
+    }
   }
 }

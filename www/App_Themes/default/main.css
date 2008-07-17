@@ -12,6 +12,7 @@ BODY {
 #menu {
   clear:both;
   margin-right:15pt;
+  margin-bottom:15pt;
   text-align:center;
   width:100%;
 }
@@ -22,13 +23,52 @@ BODY {
 }
 
 #main {
-  border:3pt outset blue;
-  min-height:300pt;
+  margin-bottom:15pt;
+}
+
+#footer {
+  border-top:2pt solid black;
+  clear:both;
+}
+
+#statusbar {
+  font-weight:bold;
+  text-align:left;
+  width:100%;
 }
 
 #nowplaying {
   clear:both;
   font-size:14pt;
+  text-align:center;
+  width:100%;
+}
+
+#nowplaying TABLE {
+  text-align:center;
+  width:100%;
+}
+
+#nowplaying TABLE TH
+{
+  text-align:right;
+  width:50%;
+}
+
+#nowplaying TABLE TD
+{
+  text-align:left;
+  width:50%;
+}
+
+#searchbox
+{
+  text-align:center;
+  width:100%;
+}
+
+#Controls
+{
   text-align:center;
   width:100%;
 }

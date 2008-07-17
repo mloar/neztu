@@ -25,19 +25,79 @@ namespace Neztu
     }
   }
 
-  public class PostgresTrackDatabase: IRandomizableTrackDatabase
+  public class PostgresDatabase: INeztuDatabase, IRandomizableTrackDatabase
   {
+    private const string m_votesTable = "Votes";
+    private const string m_historyTable = "History";
     private const string m_tracksTable = "Tracks";
     private string m_connectionString = string.Empty;
 
-    public PostgresTrackDatabase()
+
+    private Track GetBlankTrack()
+    {
+      // FIXME: This is stupid
+
+      Track ret;
+      ret.TrackId = 0;
+      ret.Filename = string.Empty;
+      ret.Title = string.Empty;
+      ret.Artist = string.Empty;
+      ret.Album = string.Empty;
+      ret.Genre = string.Empty;
+      ret.DiscNumber = 0;
+      ret.TrackNumber = 0;
+      ret.Length = TimeSpan.Zero;
+      ret.UserName = string.Empty;
+
+      return ret;
+    }
+
+    private Track GetTrackData(NpgsqlDataReader reader, int firstColumn)
+    {
+      Track ret = GetBlankTrack();
+
+      if (!reader.IsDBNull(firstColumn))
+        ret.TrackId = (uint)(int)reader.GetValue(firstColumn);
+      if (!reader.IsDBNull(firstColumn + 1))
+        ret.Filename = (string)reader.GetValue(firstColumn + 1);
+      if (!reader.IsDBNull(firstColumn + 2))
+        ret.Artist = (string)reader.GetValue(firstColumn + 2);
+      if (!reader.IsDBNull(firstColumn + 3))
+        ret.Title = (string)reader.GetValue(firstColumn + 3);
+      if (!reader.IsDBNull(firstColumn + 4))
+        ret.Album = (string)reader.GetValue(firstColumn + 4);
+      if (!reader.IsDBNull(firstColumn + 5))
+        ret.Genre = (string)reader.GetValue(firstColumn + 5);
+      if (!reader.IsDBNull(firstColumn + 6))
+        ret.DiscNumber = (uint)(int)reader.GetValue(firstColumn + 6);
+      if (!reader.IsDBNull(firstColumn + 7))
+        ret.TrackNumber = (uint)(int)reader.GetValue(firstColumn + 7);
+      if (!reader.IsDBNull(firstColumn + 8))
+        ret.Length = new TimeSpan(0, 0, (int)reader.GetValue(firstColumn + 8));
+      if (!reader.IsDBNull(firstColumn + 9))
+        ret.UserName = (string)reader.GetValue(firstColumn + 9);
+
+      return ret;
+    }
+
+    private Vote GetBlankVote()
+    {
+      Vote ret;
+      ret.UserName = string.Empty;
+      ret.ReqTrack = GetBlankTrack();
+      ret.Timestamp = DateTime.MinValue;
+
+      return ret;
+    }
+
+    public PostgresDatabase()
     {
       // Get connection string.
-      string connStrName = ConfigurationManager.AppSettings["TrackDatabaseConnectionStringName"];
+      string connStrName = ConfigurationManager.AppSettings["DatabaseConnectionStringName"];
 
       if (string.IsNullOrEmpty(connStrName))
       {
-        throw new ArgumentOutOfRangeException("TrackDatabaseConnectionStringName");
+        throw new ArgumentOutOfRangeException("DatabaseConnectionStringName");
       }
       else
       {
@@ -54,23 +114,14 @@ namespace Neztu
 
     public Track GetTrack(uint trackId)
     {
-      Track ret;
-      ret.TrackId = 0;
-      ret.Filename = string.Empty;
-      ret.Title = string.Empty;
-      ret.Artist = string.Empty;
-      ret.Album = string.Empty;
-      ret.DiscNumber = 0;
-      ret.TrackNumber = 0;
-      ret.Length = TimeSpan.Zero;
-      ret.UserName = string.Empty;
+      Track ret = GetBlankTrack();
 
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" WHERE \"TrackId\" = @TrackId",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" WHERE \"TrackId\" = @TrackId",
               m_tracksTable);
 
           dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 255).Value = trackId;
@@ -84,15 +135,7 @@ namespace Neztu
             {
               while (reader.Read())
               {
-                ret.TrackId = (uint)(int)reader.GetValue(0);
-                ret.Filename = (string)reader.GetValue(1);
-                ret.Artist = (string)reader.GetValue(2);
-                ret.Title = (string)reader.GetValue(3);
-                ret.Album = (string)reader.GetValue(4);
-                ret.DiscNumber = (uint)(int)reader.GetValue(5);
-                ret.TrackNumber = (uint)(int)reader.GetValue(6);
-                ret.Length = new TimeSpan(0, 0, (int)reader.GetValue(7));
-                ret.UserName = (string)reader.GetValue(8);
+                ret = GetTrackData(reader, 0);
               }
             }
           }
@@ -121,7 +164,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\"",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\"",
               m_tracksTable);
 
           try
@@ -133,27 +176,7 @@ namespace Neztu
             {
               while (reader.Read())
               {
-                Track t;
-                t.TrackId = (uint)(int)reader.GetValue(0);
-                t.Filename = (string)reader.GetValue(1);
-                if (!reader.IsDBNull(2))
-                  t.Artist = (string)reader.GetValue(2);
-                else
-                  t.Artist = string.Empty;
-                if (!reader.IsDBNull(3))
-                  t.Title = (string)reader.GetValue(3);
-                else
-                  t.Title = string.Empty;
-                if (!reader.IsDBNull(4))
-                  t.Album = (string)reader.GetValue(4);
-                else
-                  t.Album = string.Empty;
-                t.DiscNumber = (uint)(int)reader.GetValue(5);
-                t.TrackNumber = (uint)(int)reader.GetValue(6);
-                t.Length = new TimeSpan(0, 0, (int)reader.GetValue(7));
-                t.UserName = (string)reader.GetValue(8);
-
-                ret.Enqueue(t);
+                ret.Enqueue(GetTrackData(reader, 0));
               }
             }
           }
@@ -175,24 +198,16 @@ namespace Neztu
       return tracks;
     }
 
-    public Track GetRandom()
+    public Track GetRandomTrack()
     {
-      Track ret;
-      ret.TrackId = 0;
-      ret.Filename = string.Empty;
-      ret.Title = string.Empty;
-      ret.Artist = string.Empty;
-      ret.Album = string.Empty;
-      ret.DiscNumber = 0;
-      ret.TrackNumber = 0;
-      ret.Length = TimeSpan.Zero;
-      ret.UserName = string.Empty;
+      Track ret = GetBlankTrack();
+
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" ORDER BY random() LIMIT 1",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" ORDER BY random() LIMIT 1",
               m_tracksTable);
 
           try
@@ -204,24 +219,7 @@ namespace Neztu
             {
               while (reader.Read())
               {
-                ret.TrackId = (uint)(int)reader.GetValue(0);
-                ret.Filename = (string)reader.GetValue(1);
-                if (!reader.IsDBNull(2))
-                  ret.Artist = (string)reader.GetValue(2);
-                else
-                  ret.Artist = string.Empty;
-                if (!reader.IsDBNull(3))
-                  ret.Title = (string)reader.GetValue(3);
-                else
-                  ret.Title = string.Empty;
-                if (!reader.IsDBNull(4))
-                  ret.Album = (string)reader.GetValue(4);
-                else
-                  ret.Album = string.Empty;
-                ret.DiscNumber = (uint)(int)reader.GetValue(5);
-                ret.TrackNumber = (uint)(int)reader.GetValue(6);
-                ret.Length = new TimeSpan(0, 0, (int)reader.GetValue(7));
-                ret.UserName = (string)reader.GetValue(8);
+                ret = GetTrackData(reader, 0);
               }
             }
           }
@@ -248,12 +246,11 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\"",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\"",
               m_tracksTable);
 
           using(NpgsqlDataAdapter dbAdapter = new NpgsqlDataAdapter(dbCommand))
           {
-
             try
             {
               dbConn.Open();
@@ -286,7 +283,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" WHERE \"Title\" ~* @Title AND \"Artist\" ~* @Artist AND \"Album\" ~* @Album",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" WHERE \"Title\" ~* @Title AND \"Artist\" ~* @Artist AND \"Album\" ~* @Album",
               m_tracksTable);
 
           dbCommand.Parameters.Add("@Title", NpgsqlDbType.Varchar, 255).Value = title;
@@ -302,27 +299,7 @@ namespace Neztu
             {
               while (reader.Read())
               {
-                Track t;
-                t.TrackId = (uint)(int)reader.GetValue(0);
-                t.Filename = (string)reader.GetValue(1);
-                if (!reader.IsDBNull(2))
-                  t.Artist = (string)reader.GetValue(2);
-                else
-                  t.Artist = string.Empty;
-                if (!reader.IsDBNull(3))
-                  t.Title = (string)reader.GetValue(3);
-                else
-                  t.Title = string.Empty;
-                if (!reader.IsDBNull(4))
-                  t.Album = (string)reader.GetValue(4);
-                else
-                  t.Album = string.Empty;
-                t.DiscNumber = (uint)(int)reader.GetValue(5);
-                t.TrackNumber = (uint)(int)reader.GetValue(6);
-                t.Length = new TimeSpan(0, 0, (int)reader.GetValue(7));
-                t.UserName = (string)reader.GetValue(8);
-
-                ret.Enqueue(t);
+                ret.Enqueue(GetTrackData(reader, 0));
               }
             }
           }
@@ -352,23 +329,23 @@ namespace Neztu
         {
           using (NpgsqlCommand dbCommand2 = dbConn.CreateCommand())
           {
-
             dbCommand1.CommandText = string.Format(
-                "INSERT INTO \"{0}\" (\"Filename\", \"Artist\", \"Title\", \"Album\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\") VALUES(@Filename, @Artist, @Title, @Album, @DiscNumber, @TrackNumber, @Length, @UserName)",
+                "INSERT INTO \"{0}\" (\"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\") VALUES(@Filename, @Artist, @Title, @Album, @Genre, @DiscNumber, @TrackNumber, @Length, @UserName)",
                 m_tracksTable);
 
             dbCommand1.Parameters.Add("@Filename", NpgsqlDbType.Varchar, 255).Value = newTrack.Filename;
             dbCommand1.Parameters.Add("@Artist", NpgsqlDbType.Varchar, 255).Value = newTrack.Artist;
             dbCommand1.Parameters.Add("@Title", NpgsqlDbType.Varchar, 255).Value = newTrack.Title;
             dbCommand1.Parameters.Add("@Album", NpgsqlDbType.Varchar, 255).Value = newTrack.Album;
+            dbCommand1.Parameters.Add("@Genre", NpgsqlDbType.Varchar, 255).Value = newTrack.Genre;
             dbCommand1.Parameters.Add("@DiscNumber", NpgsqlDbType.Integer, 0).Value = newTrack.DiscNumber;
             dbCommand1.Parameters.Add("@TrackNumber", NpgsqlDbType.Integer, 0).Value = newTrack.TrackNumber;
             dbCommand1.Parameters.Add("@Length", NpgsqlDbType.Integer, 0).Value = (uint)newTrack.Length.TotalSeconds;
             dbCommand1.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = newTrack.UserName;
 
             dbCommand2.CommandText = string.Format(
-                "SELECT last_value FROM \"{0}_TrackId_seq\";"
-                , m_tracksTable);
+                "SELECT last_value FROM \"{0}_TrackId_seq\";",
+                m_tracksTable);
 
             try
             {
@@ -436,40 +413,6 @@ namespace Neztu
         }
       }
     }
-  }
-
-  public class PostgresStateDatabase : IStateDatabase
-  {
-    private const string m_votesTable = "Votes";
-    private const string m_historyTable = "History";
-    private string m_connectionString = string.Empty;
-    private ITrackDatabase m_trackDatabase;
-
-    public PostgresStateDatabase(ITrackDatabase trackDb)
-    {
-      // Get connection string.
-      string connStrName = ConfigurationManager.AppSettings["StateDatabaseConnectionStringName"];
-
-      if (string.IsNullOrEmpty(connStrName))
-      {
-        /*throw new ArgumentOutOfRangeException("TrackDatabaseConnectionStringName",
-          Properties.Resources.ErrArgumentNullOrEmpty);*/
-        throw new ArgumentOutOfRangeException("StateDatabaseConnectionStringName");
-      }
-      else
-      {
-        ConnectionStringSettings ConnectionStringSettings = ConfigurationManager.ConnectionStrings[connStrName];
-
-        if (ConnectionStringSettings == null || string.IsNullOrEmpty(ConnectionStringSettings.ConnectionString.Trim()))
-        {
-          //throw new NeztuException(Properties.Resources.ErrConnectionStringNullOrEmpty);
-          throw new Exception("Connection String Empty");
-        }
-
-        m_connectionString = ConnectionStringSettings.ConnectionString;
-        m_trackDatabase = trackDb;
-      }
-    }
 
     public Vote[] GetVotes(string userName)
     {
@@ -480,8 +423,8 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"UserName\", \"TrackId\", \"Timestamp\" FROM \"{0}\" WHERE \"UserName\"=@UserName ORDER BY \"Timestamp\"",
-              m_votesTable);
+              "SELECT \"{0}\".\"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"{1}\".\"UserName\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" WHERE \"{0}\".\"UserName\"=@UserName ORDER BY \"Timestamp\"",
+              m_votesTable, m_tracksTable);
 
           dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = userName;
 
@@ -496,8 +439,8 @@ namespace Neztu
               {
                 Vote v;
                 v.UserName = (string)reader.GetValue(0);
-                v.ReqTrack = m_trackDatabase.GetTrack((uint)(int)reader.GetValue(1));
-                v.Timestamp = (DateTime)reader.GetValue(2);
+                v.Timestamp = (DateTime)reader.GetValue(1);
+                v.ReqTrack = GetTrackData(reader, 2);
 
                 ret.Enqueue(v);
               }
@@ -530,8 +473,8 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"UserName\", \"TrackId\", \"Timestamp\" FROM \"{0}\" ORDER BY \"Timestamp\"",
-              m_votesTable);
+              "SELECT \"{0}\".\"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"{1}\".\"UserName\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" ORDER BY \"Timestamp\"",
+              m_votesTable, m_tracksTable);
 
           try
           {
@@ -544,8 +487,8 @@ namespace Neztu
               {
                 Vote v;
                 v.UserName = (string)reader.GetValue(0);
-                v.ReqTrack = m_trackDatabase.GetTrack((uint)(int)reader.GetValue(1));
-                v.Timestamp = (DateTime)reader.GetValue(2);
+                v.Timestamp = (DateTime)reader.GetValue(1);
+                v.ReqTrack = GetTrackData(reader, 2);
 
                 ret.Enqueue(v);
               }
@@ -702,8 +645,8 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"UserName\", \"TrackId\", \"Timestamp\" FROM \"{0}\" ORDER BY \"Timestamp\"",
-              m_historyTable);
+              "SELECT \"{0}\".\"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"{1}\".\"UserName\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" ORDER BY \"Timestamp\"",
+              m_historyTable, m_tracksTable);
 
           try
           {
@@ -716,8 +659,8 @@ namespace Neztu
               {
                 Vote v;
                 v.UserName = (string)reader.GetValue(0);
-                v.ReqTrack = m_trackDatabase.GetTrack((uint)(int)reader.GetValue(1));
-                v.Timestamp = (DateTime)reader.GetValue(2);
+                v.Timestamp = (DateTime)reader.GetValue(1);
+                v.ReqTrack = GetTrackData(reader, 2);
 
                 ret.Enqueue(v);
               }
@@ -776,26 +719,15 @@ namespace Neztu
 
     public Vote GetCurrent()
     {
-      Vote ret;
-      ret.UserName = string.Empty;
-      ret.ReqTrack.TrackId = 0;
-      ret.ReqTrack.Filename = string.Empty;
-      ret.ReqTrack.Title = string.Empty;
-      ret.ReqTrack.Artist = string.Empty;
-      ret.ReqTrack.Album = string.Empty;
-      ret.ReqTrack.DiscNumber = 0;
-      ret.ReqTrack.TrackNumber = 0;
-      ret.ReqTrack.Length = TimeSpan.Zero;
-      ret.ReqTrack.UserName = string.Empty;
-      ret.Timestamp = DateTime.MinValue;
+      Vote ret = GetBlankVote();
 
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"UserName\", \"TrackId\", \"Timestamp\" FROM \"{0}\" ORDER BY \"Timestamp\" DESC LIMIT 1",
-              m_historyTable);
+              "SELECT \"{0}\".\"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"{1}\".\"UserName\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" ORDER BY \"Timestamp\" DESC LIMIT 1",
+              m_historyTable, m_tracksTable);
 
           try
           {
@@ -807,8 +739,8 @@ namespace Neztu
               while (reader.Read())
               {
                 ret.UserName = (string)reader.GetValue(0);
-                ret.ReqTrack = m_trackDatabase.GetTrack((uint)(int)reader.GetValue(1));
-                ret.Timestamp = (DateTime)reader.GetValue(2);
+                ret.Timestamp = (DateTime)reader.GetValue(1);
+                ret.ReqTrack = GetTrackData(reader, 2);
               }
             }
           }
@@ -826,19 +758,6 @@ namespace Neztu
       }
 
       return ret;
-    }
-  }
-
-  public class PostgresDatabaseFactory : IDatabaseFactory
-  {
-    public ITrackDatabase GetTrackDatabase()
-    {
-      return new PostgresTrackDatabase();
-    }
-
-    public IStateDatabase GetStateDatabase()
-    {
-      return new PostgresStateDatabase(new PostgresTrackDatabase());
     }
   }
 }

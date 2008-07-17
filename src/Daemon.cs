@@ -25,10 +25,9 @@ namespace Neztu
         return 1;
       }
 
-      ITrackDatabase trackDb = DatabaseHelper.GetTrackDatabase();
-      IStateDatabase stateDb = DatabaseHelper.GetStateDatabase();
-      IRandomSelector randSel = new FullyRandomSelector(trackDb);
-      IScheduler s = new FIFOScheduler(randSel, stateDb);
+      INeztuDatabase database = DatabaseHelper.GetDatabase();
+      IRandomSelector randSel = new FullyRandomSelector(database);
+      IScheduler s = new FIFOScheduler(randSel, database);
 
       while (true)
       {

@@ -27,28 +27,28 @@ namespace Neztu
   public class FIFOScheduler : IScheduler
   {
     private IRandomSelector m_randomSelector;
-    private IStateDatabase m_stateDatabase;
+    private INeztuDatabase m_database;
 
-    public FIFOScheduler(IRandomSelector randomSelector, IStateDatabase stateDb)
+    public FIFOScheduler(IRandomSelector randomSelector, INeztuDatabase database)
     {
       m_randomSelector = randomSelector;
-      m_stateDatabase = stateDb;
+      m_database = database;
     }
 
     public Track PlayNext()
     {
       Track selected = m_randomSelector.GetRandom();
 
-      Vote[] votes = m_stateDatabase.GetVotes();
+      Vote[] votes = m_database.GetVotes();
       if (votes.Length > 0)
       {
         selected = votes[0].ReqTrack;
-        m_stateDatabase.RemoveVote(votes[0].UserName, votes[0].ReqTrack.TrackId);
-        m_stateDatabase.AddHistory(votes[0].UserName, votes[0].ReqTrack.TrackId);
+        m_database.RemoveVote(votes[0].UserName, votes[0].ReqTrack.TrackId);
+        m_database.AddHistory(votes[0].UserName, votes[0].ReqTrack.TrackId);
       }
       else
       {
-        m_stateDatabase.AddHistory(string.Empty, selected.TrackId);
+        m_database.AddHistory(string.Empty, selected.TrackId);
       }
 
       return selected;
@@ -56,19 +56,31 @@ namespace Neztu
 
     public Vote[] GetSchedule()
     {
-      return m_stateDatabase.GetVotes();
+      return m_database.GetVotes();
     }
   }
 
+  /*public class FairTimeScheduler : IScheduler
+  {
+    private IRandomSelector m_randomSelector;
+    private IStateDatabase m_database;
+
+    public FairTimeScheduler(IRandomSelector randomSelector, IStateDatabase stateDb)
+    {
+      m_randomSelector = randomSelector;
+      m_database = stateDb;
+    }
+  }*/
+
   public class FullyRandomSelector : IRandomSelector
   {
-    private ITrackDatabase m_trackDatabase;
+    private INeztuDatabase m_database;
     private bool m_dbIsRandomizable;
     private Random m_rng;
 
-    public FullyRandomSelector(ITrackDatabase trackDb)
+    public FullyRandomSelector(INeztuDatabase database)
     {
-      if (trackDb is IRandomizableTrackDatabase)
+      if (database is IRandomizableTrackDatabase)
       {
         m_dbIsRandomizable = true;
       }
@@ -77,7 +89,7 @@ namespace Neztu
         m_rng = new Random();
       }
 
-      m_trackDatabase = trackDb;
+      m_database = database;
     }
 
     public Track GetRandom()
@@ -85,11 +97,11 @@ namespace Neztu
       // FIXME: what if there are no tracks?
       if (m_dbIsRandomizable)
       {
-        return ((IRandomizableTrackDatabase)m_trackDatabase).GetRandom();
+        return ((IRandomizableTrackDatabase)m_database).GetRandomTrack();
       }
       else
       {
-        Track[] tracks = m_trackDatabase.GetTracks();
+        Track[] tracks = m_database.GetTracks();
         int r = m_rng.Next(tracks.Length);
         return tracks[r];
       }

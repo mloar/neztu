@@ -22,7 +22,11 @@ libs/taglib-sharp/src/taglib-sharp.dll: libs/taglib-sharp/Makefile
 libs/taglib-sharp/Makefile:
 	cd libs/taglib-sharp && ./autogen.sh --disable-docs
 
-install: Neztu.dll libs/taglib-sharp/src/taglib-sharp.dll libs/PgProviders/PostgreSQLProviders.dll
+install: Neztu.dll libs/taglib-sharp/src/taglib-sharp.dll libs/PgProviders/PostgreSQLProviders.dll Daemon.exe TagReader.exe
 	install Neztu.dll ../www/bin
+	install TagReader.exe ../www/bin
+	install TagReader.exe.config ../www/bin
+	install Daemon.exe ../www/bin
+	install Daemon.exe.config ../www/bin
 	install libs/taglib-sharp/src/taglib-sharp.dll ../www/bin
 	install libs/PgProviders/PostgreSQLProviders.dll ../www/bin

@@ -59,7 +59,7 @@ namespace Neztu
 
     public static void Main(string[] args)
     {
-      ITrackDatabase db = DatabaseHelper.GetTrackDatabase();
+      INeztuDatabase db = DatabaseHelper.GetDatabase();
 
       foreach (string arg in args)
       {
@@ -91,6 +91,7 @@ namespace Neztu
         ret.Title = tag.Title == null ? "" : tag.Title;
         ret.Artist = tag.FirstPerformer == null ? "" : tag.FirstPerformer;
         ret.Album = tag.Album == null ? "" : tag.Album;
+        ret.Genre = tag.FirstGenre == null ? "" : tag.FirstGenre;
         ret.DiscNumber = tag.Disc;
         ret.TrackNumber = tag.Track;
         ret.Length = file.Properties.Duration;
@@ -106,10 +107,11 @@ namespace Neztu
         Track ret;
 
         ret.TrackId = 0;
-        ret.Filename = null;
+        ret.Filename = filename;
         ret.Title = tag.Title == null ? "" : tag.Title;
         ret.Artist = tag.FirstPerformer == null ? "" : tag.FirstPerformer;
         ret.Album = tag.Album == null ? "" : tag.Album;
+        ret.Genre = tag.FirstGenre == null ? "" : tag.FirstGenre;
         ret.DiscNumber = tag.Disc;
         ret.TrackNumber = tag.Track;
         ret.Length = file.Properties.Duration;

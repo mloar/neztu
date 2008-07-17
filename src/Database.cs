@@ -22,6 +22,7 @@ namespace Neztu
     public string Title;
     public string Artist;
     public string Album;
+    public string Genre;
     public uint DiscNumber;
     public uint TrackNumber;
     public TimeSpan Length;
@@ -35,8 +36,9 @@ namespace Neztu
     public DateTime Timestamp;
   }
 
-  public interface ITrackDatabase
+  public interface INeztuDatabase
   {
+    // Track management
     Track GetTrack(uint trackId);
     Track[] GetTracks(string title, string artist, string album);
     Track[] GetTracks();
@@ -44,59 +46,42 @@ namespace Neztu
 
     uint AddTrack(Track newTrack);
     void RemoveTrack(uint trackId);
-  }
 
-  public interface IRandomizableTrackDatabase : ITrackDatabase
-  {
-    Track GetRandom();
-  }
-
-  public interface IStateDatabase
-  {
+    // Vote management
     Vote[] GetVotes();
     Vote[] GetVotes(string userName);
     void AddVote(string userName, uint trackId);
     void RemoveVote(string userName, uint trackId);
     void SwapVotes(Vote vote1, Vote vote2);
 
+    // History management
     Vote[] GetHistory();
     void AddHistory(string userName, uint trackId);
     Vote GetCurrent();
   }
 
-  public interface IDatabaseFactory
+  public interface IRandomizableTrackDatabase : INeztuDatabase
   {
-    ITrackDatabase GetTrackDatabase();
-    IStateDatabase GetStateDatabase();
+    Track GetRandomTrack();
   }
 
   public class DatabaseHelper
   {
-    private static IDatabaseFactory GetFactory()
+    public static INeztuDatabase GetDatabase()
     {
-      string factoryType = ConfigurationManager.AppSettings["DatabaseFactoryType"];
-      if (factoryType == null)
+      string databaseType = ConfigurationManager.AppSettings["DatabaseType"];
+      if (databaseType == null)
       {
-        throw new Exception("Database factory type not specified");
+        throw new Exception("Database type not specified");
       }
 
-      Type type = Type.GetType(factoryType);
+      Type type = Type.GetType(databaseType);
       if (type == null)
       {
-        throw new Exception("Could not find database factory type");
+        throw new Exception("Could not find database type");
       }
 
-      return (IDatabaseFactory)type.InvokeMember(null, BindingFlags.CreateInstance, null, null, null);
-    }
-
-    public static ITrackDatabase GetTrackDatabase()
-    {
-      return GetFactory().GetTrackDatabase();
-    }
-
-    public static IStateDatabase GetStateDatabase()
-    {
-      return GetFactory().GetStateDatabase();
+      return (INeztuDatabase)type.InvokeMember(null, BindingFlags.CreateInstance, null, null, null);
     }
   }
 }
