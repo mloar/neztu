@@ -183,9 +183,10 @@ public class AddPage : Page
 {
   public FileUpload FileUploader;
   public Button UploadButton;
-  public HtmlForm UploadForm;
   public Panel UploadPanel;
-  public Label StatusBar;
+  public Panel ScanPanel;
+  public Label UploadStatusBar;
+  public Label ScanStatusBar;
 
   public void Page_Load(object o, EventArgs e)
   {
@@ -216,7 +217,7 @@ public class AddPage : Page
       }
       catch (Exception)
       {
-        StatusBar.Text = "Could not read tags from file.";
+        UploadStatusBar.Text = "Could not read tags from file.";
         return;
       }
 
@@ -232,7 +233,7 @@ public class AddPage : Page
         }
 
         FileUploader.SaveAs(savePath);
-        StatusBar.Text = "Uploaded file as " + Path.GetFileName(savePath);
+        UploadStatusBar.Text = "Uploaded file as " + Path.GetFileName(savePath);
 
         INeztuDatabase database = DatabaseHelper.GetDatabase();
         t.Filename = savePath;
@@ -240,10 +241,14 @@ public class AddPage : Page
       }
       catch (Exception ex)
       {
-        StatusBar.Text = "Could not save file.";
+        UploadStatusBar.Text = "Could not save file.";
         Console.Error.WriteLine(ex.Message + ex.StackTrace);
       }
     }
+  }
+
+  public void ScanButton_Click(object o, EventArgs e)
+  {
   }
 }
 

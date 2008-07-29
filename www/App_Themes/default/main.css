@@ -37,40 +37,38 @@ BODY {
   width:100%;
 }
 
-#nowplaying {
-  clear:both;
+#nowplayingleft {
+  float:left;
   font-size:14pt;
-  text-align:center;
-  width:100%;
-}
-
-#nowplaying TABLE {
-  text-align:center;
-  width:100%;
-}
-
-#nowplaying TABLE TH
-{
+  font-weight:bold;
+  line-height:200%;
+  vertical-align:center;
   text-align:right;
   width:50%;
 }
 
-#nowplaying TABLE TD
-{
-  text-align:left;
+#nowplayingright {
+  float:left;
+  font-size:14pt;
+  vertical-align:center;
   width:50%;
 }
 
 #searchbox
 {
-  text-align:center;
-  width:100%;
+  margin-left:auto;
+  margin-right:auto;
 }
 
-#Controls
+#searchbox TABLE
 {
-  text-align:center;
-  width:100%;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+#daemoncontrols
+{
+  clear:both;
 }
 
 #LoginForm

@@ -1,0 +1,23 @@
+BUILDING FROM SOURCE:
+1. Extract the Neztu distribution package.
+
+2. Build or download binaries for Neztu's dependencies.  Either install them
+into the GAC, or copy them into src/libs.
+
+3. Run 'make dist' in src.
+
+INSTALLING A BINARY PACKAGE:
+1. Create a directory to hold the application, and configure Mono/IIS
+appropriately.  Remember that Neztu is an ASP.NET 2.0 application.
+
+2. Extract the contents of the distribution archive into this directory.
+
+3. Install dependencies into the GAC or into the bin subdirectory of the
+application directory.
+
+3. Modify web.config, bin/Daemon.exe.config, and bin/TagReader.exe.config as
+necessary.
+
+DEPENDENCIES:
+TagLib# 2.0.3.0: http://www.taglib-sharp.com/Download/
+AspSQLProvider: http://dev.nauck-it.de/aspsqlprovider/

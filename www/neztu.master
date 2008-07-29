@@ -16,19 +16,18 @@
       </div>
       <div id="footer">
         <div id="nowplaying">
-          <table border="0">
-            <tr><th>Now Playing:</th><td>
+          <div id="nowplayingleft">Now Playing:</div>
+          <div id="nowplayingright">
             <asp:Label SkinId="NowPlayingTrack" Id="NowPlayingTrack" runat="server" /><br/>
             <asp:Label SkinId="NowPlayingArtist" Id="NowPlayingArtist" runat="server" />
-            </td></tr>
-            <tr><td colspan="2" id="Controls">
+          </div>
+          <div id="daemoncontrols">
             <asp:Panel SkinId="DaemonControls" Id="DaemonControls" runat="server">
               <asp:Button SkinId="StartButton" Id="StartButton" OnClick="StartButton_Click" Text="Start" runat="server" />
               <asp:Button SkinId="StopButton" Id="StopButton" OnClick="StopButton_Click" Text="Stop" runat="server" />
               <asp:Button SkinId="SkipButton" Id="SkipButton" OnClick="SkipButton_Click" Text="Skip" runat="server" />
             </asp:Panel>
-            </td></tr>
-          </table>
+          </div>
         </div>
       </div>
     </form>
