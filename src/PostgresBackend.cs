@@ -198,17 +198,18 @@ namespace Neztu
       return tracks;
     }
 
-    public Track GetRandomTrack()
+    public Track[] GetRandomTracks(uint count)
     {
-      Track ret = GetBlankTrack();
+      Queue ret = new Queue();
 
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" ORDER BY random() LIMIT 1",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" ORDER BY random() LIMIT @Count",
               m_tracksTable);
+          dbCommand.Parameters.Add("@Count", NpgsqlDbType.Integer, 0).Value = count;
 
           try
           {
@@ -219,7 +220,7 @@ namespace Neztu
             {
               while (reader.Read())
               {
-                ret = GetTrackData(reader, 0);
+                ret.Enqueue(GetTrackData(reader, 0));
               }
             }
           }
@@ -236,7 +237,9 @@ namespace Neztu
         }
       }
 
-      return ret;
+      Track[] tracks = new Track[ret.Count];
+      ret.CopyTo(tracks, 0);
+      return tracks;
     }
 
     public DataView GetTrackView()

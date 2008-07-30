@@ -255,43 +255,73 @@ public class AddPage : Page
 public class IndexPage : Page
 {
   public DataGrid QueueData;
+  public DataGrid RandomTracks;
   public Label StatusBar;
-  public void Page_Load(object o, EventArgs e)
-  {
-    if (!IsPostBack)
-    {
-      INeztuDatabase database = DatabaseHelper.GetDatabase();
-      IScheduler sched = new FIFOScheduler(null, database);
 
-      Vote[] queue = sched.GetSchedule();
-      if (queue.Length > 0)
+  public void Page_PreRender(object o, EventArgs e)
+  {
+    INeztuDatabase database = DatabaseHelper.GetDatabase();
+    IScheduler sched = new FIFOScheduler(null, database);
+    DataView dataView;
+
+    Vote[] queue = sched.GetSchedule();
+    if (queue.Length > 0)
+    {
+      dataView = new DataView();
+      dataView.Table = new DataTable("Queue");
+      dataView.Table.Columns.Add(new DataColumn("Track"));
+      dataView.Table.Columns.Add(new DataColumn("Album"));
+      dataView.Table.Columns.Add(new DataColumn("Length"));
+      dataView.Table.Columns.Add(new DataColumn("Requested By"));
+      foreach (Vote v in queue)
       {
-        DataView dataView = new DataView();
-        dataView.Table = new DataTable("Queue");
-        dataView.Table.Columns.Add(new DataColumn("Track"));
-        dataView.Table.Columns.Add(new DataColumn("Album"));
-        dataView.Table.Columns.Add(new DataColumn("Length"));
-        dataView.Table.Columns.Add(new DataColumn("Requested By"));
-        foreach (Vote v in queue)
-        {
-          DataRowView rowView = dataView.AddNew();
-          rowView["Track"] = v.ReqTrack.Title;
-          rowView["Album"] = v.ReqTrack.Album;
-          rowView["Length"] = v.ReqTrack.Length.ToString();
-          rowView["Requested By"] = v.UserName;
-          rowView.EndEdit();
-        }
-        QueueData.DataSource = dataView;
-        QueueData.DataBind();
-        QueueData.Visible = true;
-        StatusBar.Text = string.Empty;
+        DataRowView rowView = dataView.AddNew();
+        rowView["Track"] = v.ReqTrack.Title;
+        rowView["Album"] = v.ReqTrack.Album;
+        rowView["Length"] = v.ReqTrack.Length.ToString();
+        rowView["Requested By"] = v.UserName;
+        rowView.EndEdit();
       }
-      else
-      {
-        QueueData.Visible = false;
-        StatusBar.Text = "No requests in the queue!";
-      }
+      QueueData.DataSource = dataView;
+      QueueData.DataBind();
     }
+
+    if (database is IRandomizableTrackDatabase)
+    {
+      Track[] tracks = ((IRandomizableTrackDatabase)database).GetRandomTracks(10);
+
+      dataView = new DataView();
+      dataView.Table = new DataTable("Tracks");
+      dataView.Table.Columns.Add(new DataColumn("TrackId"));
+      dataView.Table.Columns.Add(new DataColumn("Title"));
+      dataView.Table.Columns.Add(new DataColumn("Album"));
+      dataView.Table.Columns.Add(new DataColumn("Length"));
+      foreach (Track t in tracks)
+      {
+        DataRowView rowView = dataView.AddNew();
+        rowView["TrackId"] = t.TrackId;
+        rowView["Title"] = t.Title;
+        rowView["Album"] = t.Album;
+        rowView["Length"] = t.Length.ToString();
+        rowView.EndEdit();
+      }
+
+      RandomTracks.DataSource = dataView;
+      RandomTracks.DataBind();
+    }
+  }
+
+  public void RandomTracks_Command(object o, DataGridCommandEventArgs e)
+  {
+    INeztuDatabase database = DatabaseHelper.GetDatabase();
+
+    // This is a little kludgey, but it works
+    uint trackId = uint.Parse(e.Item.Cells[1].Text);
+    Track t = database.GetTrack(trackId);
+    if (t.TrackId == trackId)
+      database.AddVote(User.Identity.Name, trackId);
+
+    StatusBar.Text = string.Format("Voted for {0}.", t.Title);
   }
 }
 

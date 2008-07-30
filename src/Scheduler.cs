@@ -97,7 +97,7 @@ namespace Neztu
       // FIXME: what if there are no tracks?
       if (m_dbIsRandomizable)
       {
-        return ((IRandomizableTrackDatabase)m_database).GetRandomTrack();
+        return ((IRandomizableTrackDatabase)m_database).GetRandomTracks(1)[0];
       }
       else
       {

@@ -62,7 +62,7 @@ namespace Neztu
 
   public interface IRandomizableTrackDatabase : INeztuDatabase
   {
-    Track GetRandomTrack();
+    Track[] GetRandomTracks(uint count);
   }
 
   public class DatabaseHelper
