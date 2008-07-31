@@ -184,8 +184,10 @@ public class AddPage : Page
   public FileUpload FileUploader;
   public Button UploadButton;
   public Panel UploadPanel;
-  public Panel ScanPanel;
   public Label UploadStatusBar;
+  public Panel ScanPanel;
+  public Button ScanButton;
+  public Label ScanDirectory;
   public Label ScanStatusBar;
 
   public void Page_Load(object o, EventArgs e)
@@ -193,6 +195,8 @@ public class AddPage : Page
     if (!IsPostBack)
     {
       UploadPanel.Visible = (ConfigurationManager.AppSettings["UploadDirectory"] != null);
+      ScanPanel.Visible = (ConfigurationManager.AppSettings["ScanDirectory"] != null);
+      ScanDirectory.Text = ConfigurationManager.AppSettings["ScanDirectory"] + Path.DirectorySeparatorChar + User.Identity.Name;
     }
   }
 
@@ -249,12 +253,20 @@ public class AddPage : Page
 
   public void ScanButton_Click(object o, EventArgs e)
   {
+    if (Process.Start(ConfigurationManager.AppSettings["ScanCommand"], ConfigurationManager.AppSettings["ScanDirectory"] + Path.DirectorySeparatorChar + User.Identity.Name) != null)
+    {
+      ScanStatusBar.Text = "Scanning has been initiated in the background.";
+    }
+    else
+    {
+      ScanStatusBar.Text = "Could not initiate scan.";
+    }
   }
 }
 
 public class IndexPage : Page
 {
-  public DataGrid QueueData;
+  public Anthem.DataGrid QueueData;
   public DataGrid RandomTracks;
   public Label StatusBar;
 
@@ -265,49 +277,49 @@ public class IndexPage : Page
     DataView dataView;
 
     Vote[] queue = sched.GetSchedule();
-    if (queue.Length > 0)
+    dataView = new DataView();
+    dataView.Table = new DataTable("Queue");
+    dataView.Table.Columns.Add(new DataColumn("Track"));
+    dataView.Table.Columns.Add(new DataColumn("Album"));
+    dataView.Table.Columns.Add(new DataColumn("Length"));
+    dataView.Table.Columns.Add(new DataColumn("Requested By"));
+    foreach (Vote v in queue)
     {
-      dataView = new DataView();
-      dataView.Table = new DataTable("Queue");
-      dataView.Table.Columns.Add(new DataColumn("Track"));
-      dataView.Table.Columns.Add(new DataColumn("Album"));
-      dataView.Table.Columns.Add(new DataColumn("Length"));
-      dataView.Table.Columns.Add(new DataColumn("Requested By"));
-      foreach (Vote v in queue)
-      {
-        DataRowView rowView = dataView.AddNew();
-        rowView["Track"] = v.ReqTrack.Title;
-        rowView["Album"] = v.ReqTrack.Album;
-        rowView["Length"] = v.ReqTrack.Length.ToString();
-        rowView["Requested By"] = v.UserName;
-        rowView.EndEdit();
-      }
-      QueueData.DataSource = dataView;
-      QueueData.DataBind();
+      DataRowView rowView = dataView.AddNew();
+      rowView["Track"] = v.ReqTrack.Title;
+      rowView["Album"] = v.ReqTrack.Album;
+      rowView["Length"] = v.ReqTrack.Length.ToString();
+      rowView["Requested By"] = v.UserName;
+      rowView.EndEdit();
     }
+    QueueData.DataSource = dataView;
+    QueueData.DataBind();
 
-    if (database is IRandomizableTrackDatabase)
+    if (!Anthem.Manager.IsCallBack)
     {
-      Track[] tracks = ((IRandomizableTrackDatabase)database).GetRandomTracks(10);
-
-      dataView = new DataView();
-      dataView.Table = new DataTable("Tracks");
-      dataView.Table.Columns.Add(new DataColumn("TrackId"));
-      dataView.Table.Columns.Add(new DataColumn("Title"));
-      dataView.Table.Columns.Add(new DataColumn("Album"));
-      dataView.Table.Columns.Add(new DataColumn("Length"));
-      foreach (Track t in tracks)
+      if (database is IRandomizableTrackDatabase)
       {
-        DataRowView rowView = dataView.AddNew();
-        rowView["TrackId"] = t.TrackId;
-        rowView["Title"] = t.Title;
-        rowView["Album"] = t.Album;
-        rowView["Length"] = t.Length.ToString();
-        rowView.EndEdit();
-      }
+        Track[] tracks = ((IRandomizableTrackDatabase)database).GetRandomTracks(10);
 
-      RandomTracks.DataSource = dataView;
-      RandomTracks.DataBind();
+        dataView = new DataView();
+        dataView.Table = new DataTable("Tracks");
+        dataView.Table.Columns.Add(new DataColumn("TrackId"));
+        dataView.Table.Columns.Add(new DataColumn("Title"));
+        dataView.Table.Columns.Add(new DataColumn("Album"));
+        dataView.Table.Columns.Add(new DataColumn("Length"));
+        foreach (Track t in tracks)
+        {
+          DataRowView rowView = dataView.AddNew();
+          rowView["TrackId"] = t.TrackId;
+          rowView["Title"] = t.Title;
+          rowView["Album"] = t.Album;
+          rowView["Length"] = t.Length.ToString();
+          rowView.EndEdit();
+        }
+
+        RandomTracks.DataSource = dataView;
+        RandomTracks.DataBind();
+      }
     }
   }
 
@@ -374,8 +386,9 @@ public class LoginPage : Page
 public class MasterPage : System.Web.UI.MasterPage
 {
   public Panel DaemonControls;
-  public Label NowPlayingTrack;
-  public Label NowPlayingArtist;
+  public Anthem.Label NowPlayingTrack;
+  public Anthem.Label NowPlayingArtist;
+  public Anthem.Timer NowPlayingTimer;
 
   public void Page_PreRender(object o, EventArgs e)
   {
@@ -386,14 +399,22 @@ public class MasterPage : System.Web.UI.MasterPage
     {
       NowPlayingTrack.Text = "";
       NowPlayingArtist.Text = "";
+      NowPlayingTimer.StopTimer();
     }
     else
     {
       NowPlayingTrack.Text = v.ReqTrack.Title;
       NowPlayingArtist.Text = v.ReqTrack.Artist;
+      NowPlayingTimer.Interval = (int)((v.ReqTrack.Length - (DateTime.Now - v.Timestamp)).TotalSeconds * 1000 + 2000);
+      NowPlayingTimer.StartTimer();
     }
 
     DaemonControls.Visible = Context.User.IsInRole("Administrators");
+  }
+
+  public void NowPlayingTimer_Tick(object o, EventArgs e)
+  {
+    // All the actual work is done in Page_PreRender
   }
 
   public void StartButton_Click(object o, EventArgs e)

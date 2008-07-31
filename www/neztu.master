@@ -18,8 +18,9 @@
         <div id="nowplaying">
           <div id="nowplayingleft">Now Playing:</div>
           <div id="nowplayingright">
-            <asp:Label SkinId="NowPlayingTrack" Id="NowPlayingTrack" runat="server" /><br/>
-            <asp:Label SkinId="NowPlayingArtist" Id="NowPlayingArtist" runat="server" />
+            <anthem:Timer Id="NowPlayingTimer" runat="server" Enabled="true" Interval="3000" OnTick="NowPlayingTimer_Tick" />
+            <anthem:Label SkinId="NowPlayingTrack" Id="NowPlayingTrack" UpdateAfterCallBack="true" runat="server" /><br/>
+            <anthem:Label SkinId="NowPlayingArtist" Id="NowPlayingArtist" UpdateAfterCallBack="true" runat="server" />
           </div>
           <div id="daemoncontrols">
             <asp:Panel SkinId="DaemonControls" Id="DaemonControls" runat="server">

@@ -1,3 +1,4 @@
 <asp:Image runat="server" SkinId="Banner" ImageUrl="banner.jpg" alt="Neztu!"/>
 <asp:DataGrid runat="server" style="width:100%" />
+<anthem:DataGrid runat="server" style="width:100%" />
 <asp:Panel runat="server" SkinId="DaemonControls" style="text-align:center" />

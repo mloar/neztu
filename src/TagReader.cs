@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 
 using System;
-using TagLib;
+using System.IO;
 
 namespace Neztu
 {
@@ -18,10 +18,10 @@ namespace Neztu
   {
     class StreamAbstraction : TagLib.File.IFileAbstraction
     {
-      private System.IO.Stream m_stream;
+      private Stream m_stream;
       private string m_filename;
 
-      public StreamAbstraction(string filename, System.IO.Stream stream)
+      public StreamAbstraction(string filename, Stream stream)
       {
         m_filename = filename;
         m_stream = stream;
@@ -35,7 +35,7 @@ namespace Neztu
         }
       }
 
-      public System.IO.Stream ReadStream
+      public Stream ReadStream
       {
         get
         {
@@ -43,7 +43,7 @@ namespace Neztu
         }
       }
 
-      public System.IO.Stream WriteStream
+      public Stream WriteStream
       {
         get
         {
@@ -51,9 +51,54 @@ namespace Neztu
         }
       }
 
-      public void CloseStream (System.IO.Stream stream)
+      public void CloseStream (Stream stream)
       {
         stream.Close();
+      }
+    }
+
+    public static void DoDirectory(INeztuDatabase db, string directory)
+    {
+      try
+      {
+        foreach (string file in Directory.GetFiles(directory))
+        {
+          // FIXME: This is a hack because TagLib appears to eat it on .wma files
+          if (Path.GetExtension(file) == ".wma")
+            continue;
+
+          try
+          {
+            Track t = ReadFile(file);
+            t.UserName = string.Empty;
+            db.AddTrack(t);
+          }
+          catch (ApplicationException)
+          {
+            Console.Error.WriteLine("{0} has no usable tags.  Skipping.", file);
+          }
+          catch (TagLib.UnsupportedFormatException)
+          {
+            Console.Error.WriteLine("{0} is an unsupported format.  Skipping.", file);
+          }
+          catch (TagLib.CorruptFileException)
+          {
+            Console.Error.WriteLine("{0} could not be read.  Skipping.", file);
+          }
+          catch (PostgresBackendException)
+          {
+            Console.Error.WriteLine("Database error occurred trying to add {0}.  Skipping.", file);
+          }
+        }
+
+        foreach (string dir in Directory.GetDirectories(directory))
+        {
+          DoDirectory(db, dir);
+        }
+      }
+      catch (UnauthorizedAccessException)
+      {
+        Console.Error.WriteLine("{0} could not be accessed.  Skipping.", directory);
       }
     }
 
@@ -63,61 +108,73 @@ namespace Neztu
 
       foreach (string arg in args)
       {
-        try
-        {
-          Track t = ReadFile(arg);
-          t.UserName = string.Empty;
-          db.AddTrack(t);
-        }
-        catch (TagLib.CorruptFileException)
-        {
-          Console.Error.WriteLine("{0} could not be read.  Skipping.", arg);
-        }
-        catch (PostgresBackendException)
-        {
-          Console.Error.WriteLine("Database error occurred trying to add {0}.  Skipping.", arg);
-        }
+        DoDirectory(db, arg);
+
       }
     }
 
     public static Track ReadFile(string filename)
     {
-        File file = File.Create(filename);
-        Tag tag = file.GetTag(TagTypes.Id3v2);
-        Track ret;
+      TagLib.File file = TagLib.File.Create(filename);
+      // Beware!  TagTypes.AllTags does not work!
+      TagLib.Tag tag = file.GetTag(TagLib.TagTypes.Id3v2);
+      if (tag == null)
+      {
+        tag = file.GetTag(TagLib.TagTypes.Id3v1);
+        if (tag == null)
+        {
+          tag = file.GetTag(TagLib.TagTypes.Xiph);
+          if (tag == null)
+          {
+            tag = file.GetTag(TagLib.TagTypes.Asf);
+            if (tag == null)
+            {
+              // TODO: use a custom exception class
+              throw new ApplicationException("File has no readable tags");
+            }
+          }
+        }
+      }
 
-        ret.TrackId = 0;
-        ret.Filename = System.IO.Path.GetFullPath(filename);
-        ret.Title = tag.Title == null ? "" : tag.Title;
-        ret.Artist = tag.FirstPerformer == null ? "" : tag.FirstPerformer;
-        ret.Album = tag.Album == null ? "" : tag.Album;
-        ret.Genre = tag.FirstGenre == null ? "" : tag.FirstGenre;
-        ret.DiscNumber = tag.Disc;
-        ret.TrackNumber = tag.Track;
-        ret.Length = file.Properties.Duration;
-        ret.UserName = string.Empty;
+      Track ret;
+      ret.TrackId = 0;
+      ret.Filename = Path.GetFullPath(filename);
+      ret.Title = tag.Title == null ? "" : tag.Title;
+      ret.Artist = tag.FirstPerformer == null ? "" : tag.FirstPerformer;
+      ret.Album = tag.Album == null ? "" : tag.Album;
+      ret.Genre = tag.FirstGenre == null ? "" : tag.FirstGenre;
+      ret.DiscNumber = tag.Disc;
+      ret.TrackNumber = tag.Track;
+      ret.Length = file.Properties.Duration;
+      ret.UserName = string.Empty;
 
-        return ret;
+      return ret;
     }
 
-    public static Track ReadStream(string filename, System.IO.Stream stream)
+    public static Track ReadStream(string filename, Stream stream)
     {
-        File file = File.Create(new StreamAbstraction(filename, stream));
-        Tag tag = file.GetTag(TagTypes.Id3v2);
-        Track ret;
+      TagLib.File file = TagLib.File.Create(new StreamAbstraction(filename, stream));
+      TagLib.Tag tag = file.GetTag(TagLib.TagTypes.Id3v2);
+      if (tag == null)
+      {
+        // TODO: use a custom exception class
+        throw new ApplicationException("File has no readable tags");
+      }
 
-        ret.TrackId = 0;
-        ret.Filename = filename;
-        ret.Title = tag.Title == null ? "" : tag.Title;
-        ret.Artist = tag.FirstPerformer == null ? "" : tag.FirstPerformer;
-        ret.Album = tag.Album == null ? "" : tag.Album;
-        ret.Genre = tag.FirstGenre == null ? "" : tag.FirstGenre;
-        ret.DiscNumber = tag.Disc;
-        ret.TrackNumber = tag.Track;
-        ret.Length = file.Properties.Duration;
-        ret.UserName = string.Empty;
+      Track ret;
 
-        return ret;
+      ret.TrackId = 0;
+      ret.Filename = filename;
+      ret.Title = tag.Title == null ? "" : tag.Title;
+      ret.Artist = tag.FirstPerformer == null ? "" : tag.FirstPerformer;
+      ret.Album = tag.Album == null ? "" : tag.Album;
+      ret.Genre = tag.FirstGenre == null ? "" : tag.FirstGenre;
+      ret.DiscNumber = tag.Disc;
+      ret.TrackNumber = tag.Track;
+      ret.Length = file.Properties.Duration;
+      ret.UserName = string.Empty;
+
+      return ret;
     }
   }
 }
