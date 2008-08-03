@@ -7,9 +7,15 @@
     </div>
     <div id="randomtracks">
       <strong>Some random tracks for your voting pleasure:</strong>
-      <asp:DataGrid id="RandomTracks" OnItemCommand="RandomTracks_Command" runat="server">
+      <asp:DataGrid id="RandomTracks" AutoGenerateColumns="false"
+          OnItemCommand="RandomTracks_Command" runat="server">
         <columns>
           <asp:ButtonColumn Text="Vote" CommandName="Vote"/>
+          <asp:BoundColumn DataField="TrackId" Visible="false" />
+          <asp:BoundColumn HeaderText="Title" DataField="Title" />
+          <asp:BoundColumn HeaderText="Artist" DataField="Artist" />
+          <asp:BoundColumn HeaderText="Album" DataField="Album" />
+          <asp:BoundColumn HeaderText="Length" DataField="Length" />
         </columns>
       </asp:DataGrid>
     </div>

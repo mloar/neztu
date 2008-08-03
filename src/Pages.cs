@@ -305,6 +305,7 @@ public class IndexPage : Page
         dataView.Table = new DataTable("Tracks");
         dataView.Table.Columns.Add(new DataColumn("TrackId"));
         dataView.Table.Columns.Add(new DataColumn("Title"));
+        dataView.Table.Columns.Add(new DataColumn("Artist"));
         dataView.Table.Columns.Add(new DataColumn("Album"));
         dataView.Table.Columns.Add(new DataColumn("Length"));
         foreach (Track t in tracks)
@@ -312,6 +313,7 @@ public class IndexPage : Page
           DataRowView rowView = dataView.AddNew();
           rowView["TrackId"] = t.TrackId;
           rowView["Title"] = t.Title;
+          rowView["Artist"] = t.Album;
           rowView["Album"] = t.Album;
           rowView["Length"] = t.Length.ToString();
           rowView.EndEdit();
