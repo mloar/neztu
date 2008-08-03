@@ -40,6 +40,7 @@ namespace Neztu
   {
     // Track management
     Track GetTrack(uint trackId);
+    Track GetTrack(string filename);
     Track[] GetTracks(string title, string artist, string album);
     Track[] GetTracks();
     DataView GetTrackView();

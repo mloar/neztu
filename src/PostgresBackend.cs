@@ -124,7 +124,50 @@ namespace Neztu
               "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" WHERE \"TrackId\" = @TrackId",
               m_tracksTable);
 
-          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 255).Value = trackId;
+          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Integer, 0).Value = trackId;
+
+          try
+          {
+            dbConn.Open();
+            dbCommand.Prepare();
+
+            using (NpgsqlDataReader reader = dbCommand.ExecuteReader())
+            {
+              while (reader.Read())
+              {
+                ret = GetTrackData(reader, 0);
+              }
+            }
+          }
+          catch (NpgsqlException e)
+          {
+            Console.Error.WriteLine(e.ToString());
+            throw new PostgresBackendException("The database operation was aborted (see error log for details).");
+          }
+          finally
+          {
+            if (dbConn != null)
+              dbConn.Close();
+          }
+        }
+      }
+
+      return ret;
+    }
+
+    public Track GetTrack(string filename)
+    {
+      Track ret = GetBlankTrack();
+
+      using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
+      {
+        using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
+        {
+          dbCommand.CommandText = string.Format(
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" WHERE \"Filename\" = @Filename",
+              m_tracksTable);
+
+          dbCommand.Parameters.Add("@Filename", NpgsqlDbType.Varchar, 255).Value = filename;
 
           try
           {
