@@ -59,6 +59,7 @@ namespace Neztu
 
     public static void DoDirectory(INeztuDatabase db, string directory)
     {
+      Console.WriteLine("Entering directory {0}...", directory);
       try
       {
         foreach (string file in Directory.GetFiles(directory))
@@ -69,9 +70,17 @@ namespace Neztu
 
           try
           {
-            Track t = ReadFile(file);
-            t.UserName = string.Empty;
-            db.AddTrack(t);
+            if (db.GetTrack(file).TrackId == 0)
+            {
+              Console.WriteLine("Attempting to read {0}...", file);
+              Track t = ReadFile(file);
+              t.UserName = string.Empty;
+              db.AddTrack(t);
+            }
+            else
+            {
+              Console.WriteLine("Already have {0}, skipping.", file);
+            }
           }
           catch (ApplicationException)
           {
@@ -115,25 +124,39 @@ namespace Neztu
 
     public static Track ReadFile(string filename)
     {
-      TagLib.File file = TagLib.File.Create(filename);
-      // Beware!  TagTypes.AllTags does not work!
-      TagLib.Tag tag = file.GetTag(TagLib.TagTypes.Id3v2);
-      if (tag == null)
+      TagLib.File file;
+      TagLib.Tag tag;
+
+      try
       {
-        tag = file.GetTag(TagLib.TagTypes.Id3v1);
+        file = TagLib.File.Create(filename);
+        // Beware!  TagTypes.AllTags does not work!
+        tag = file.GetTag(TagLib.TagTypes.Id3v2);
         if (tag == null)
         {
-          tag = file.GetTag(TagLib.TagTypes.Xiph);
+          tag = file.GetTag(TagLib.TagTypes.Id3v1);
           if (tag == null)
           {
-            tag = file.GetTag(TagLib.TagTypes.Asf);
+            tag = file.GetTag(TagLib.TagTypes.Xiph);
             if (tag == null)
             {
-              // TODO: use a custom exception class
-              throw new ApplicationException("File has no readable tags");
+              tag = file.GetTag(TagLib.TagTypes.Asf);
+              if (tag == null)
+              {
+                // TODO: use a custom exception class
+                throw new ApplicationException("File has no readable tags");
+              }
             }
           }
         }
+      }
+      catch (FileNotFoundException)
+      {
+        throw new ApplicationException("Broken symlink?");
+      }
+      catch (NullReferenceException)
+      {
+        throw new ApplicationException("Taglib apparently ate it");
       }
 
       Track ret;
