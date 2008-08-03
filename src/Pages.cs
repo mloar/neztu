@@ -313,7 +313,7 @@ public class IndexPage : Page
           DataRowView rowView = dataView.AddNew();
           rowView["TrackId"] = t.TrackId;
           rowView["Title"] = t.Title;
-          rowView["Artist"] = t.Album;
+          rowView["Artist"] = t.Artist;
           rowView["Album"] = t.Album;
           rowView["Length"] = t.Length.ToString();
           rowView.EndEdit();
