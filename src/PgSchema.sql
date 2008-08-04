@@ -20,7 +20,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: History; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
+-- Name: History; Type: TABLE; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE TABLE "History" (
@@ -30,10 +30,10 @@ CREATE TABLE "History" (
 );
 
 
-ALTER TABLE public."History" OWNER TO "www-data";
+ALTER TABLE public."History" OWNER TO "neztu";
 
 --
--- Name: ProfileData; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
+-- Name: ProfileData; Type: TABLE; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE TABLE "ProfileData" (
@@ -45,10 +45,10 @@ CREATE TABLE "ProfileData" (
 );
 
 
-ALTER TABLE public."ProfileData" OWNER TO "www-data";
+ALTER TABLE public."ProfileData" OWNER TO "neztu";
 
 --
--- Name: Profiles; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
+-- Name: Profiles; Type: TABLE; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE TABLE "Profiles" (
@@ -61,10 +61,10 @@ CREATE TABLE "Profiles" (
 );
 
 
-ALTER TABLE public."Profiles" OWNER TO "www-data";
+ALTER TABLE public."Profiles" OWNER TO "neztu";
 
 --
--- Name: Roles; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
+-- Name: Roles; Type: TABLE; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE TABLE "Roles" (
@@ -73,10 +73,10 @@ CREATE TABLE "Roles" (
 );
 
 
-ALTER TABLE public."Roles" OWNER TO "www-data";
+ALTER TABLE public."Roles" OWNER TO "neztu";
 
 --
--- Name: Sessions; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
+-- Name: Sessions; Type: TABLE; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE TABLE "Sessions" (
@@ -93,10 +93,10 @@ CREATE TABLE "Sessions" (
 );
 
 
-ALTER TABLE public."Sessions" OWNER TO "www-data";
+ALTER TABLE public."Sessions" OWNER TO "neztu";
 
 --
--- Name: Tracks; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
+-- Name: Tracks; Type: TABLE; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE TABLE "Tracks" (
@@ -113,10 +113,10 @@ CREATE TABLE "Tracks" (
 );
 
 
-ALTER TABLE public."Tracks" OWNER TO "www-data";
+ALTER TABLE public."Tracks" OWNER TO "neztu";
 
 --
--- Name: Users; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
+-- Name: Users; Type: TABLE; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE TABLE "Users" (
@@ -143,10 +143,10 @@ CREATE TABLE "Users" (
 );
 
 
-ALTER TABLE public."Users" OWNER TO "www-data";
+ALTER TABLE public."Users" OWNER TO "neztu";
 
 --
--- Name: UsersInRoles; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
+-- Name: UsersInRoles; Type: TABLE; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE TABLE "UsersInRoles" (
@@ -156,10 +156,10 @@ CREATE TABLE "UsersInRoles" (
 );
 
 
-ALTER TABLE public."UsersInRoles" OWNER TO "www-data";
+ALTER TABLE public."UsersInRoles" OWNER TO "neztu";
 
 --
--- Name: Votes; Type: TABLE; Schema: public; Owner: www-data; Tablespace: 
+-- Name: Votes; Type: TABLE; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE TABLE "Votes" (
@@ -169,10 +169,10 @@ CREATE TABLE "Votes" (
 );
 
 
-ALTER TABLE public."Votes" OWNER TO "www-data";
+ALTER TABLE public."Votes" OWNER TO "neztu";
 
 --
--- Name: History_pkey; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: History_pkey; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "History"
@@ -180,7 +180,7 @@ ALTER TABLE ONLY "History"
 
 
 --
--- Name: Tracks_Filename_key; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: Tracks_Filename_key; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "Tracks"
@@ -188,7 +188,7 @@ ALTER TABLE ONLY "Tracks"
 
 
 --
--- Name: Tracks_pkey; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: Tracks_pkey; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "Tracks"
@@ -196,7 +196,7 @@ ALTER TABLE ONLY "Tracks"
 
 
 --
--- Name: Votes_pkey; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: Votes_pkey; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "Votes"
@@ -204,7 +204,7 @@ ALTER TABLE ONLY "Votes"
 
 
 --
--- Name: profiledata_pkey; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: profiledata_pkey; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "ProfileData"
@@ -212,7 +212,7 @@ ALTER TABLE ONLY "ProfileData"
 
 
 --
--- Name: profiledata_profile_name_unique; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: profiledata_profile_name_unique; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "ProfileData"
@@ -220,7 +220,7 @@ ALTER TABLE ONLY "ProfileData"
 
 
 --
--- Name: profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "Profiles"
@@ -228,7 +228,7 @@ ALTER TABLE ONLY "Profiles"
 
 
 --
--- Name: profiles_username_application_unique; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: profiles_username_application_unique; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "Profiles"
@@ -236,7 +236,7 @@ ALTER TABLE ONLY "Profiles"
 
 
 --
--- Name: roles_pkey; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: roles_pkey; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "Roles"
@@ -244,7 +244,7 @@ ALTER TABLE ONLY "Roles"
 
 
 --
--- Name: sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "Sessions"
@@ -252,7 +252,7 @@ ALTER TABLE ONLY "Sessions"
 
 
 --
--- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "Users"
@@ -260,7 +260,7 @@ ALTER TABLE ONLY "Users"
 
 
 --
--- Name: users_username_application_unique; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: users_username_application_unique; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "Users"
@@ -268,7 +268,7 @@ ALTER TABLE ONLY "Users"
 
 
 --
--- Name: usersinroles_pkey; Type: CONSTRAINT; Schema: public; Owner: www-data; Tablespace: 
+-- Name: usersinroles_pkey; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
 --
 
 ALTER TABLE ONLY "UsersInRoles"
@@ -276,49 +276,49 @@ ALTER TABLE ONLY "UsersInRoles"
 
 
 --
--- Name: profiles_isanonymous_index; Type: INDEX; Schema: public; Owner: www-data; Tablespace: 
+-- Name: profiles_isanonymous_index; Type: INDEX; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE INDEX profiles_isanonymous_index ON "Profiles" USING btree ("IsAnonymous");
 
 
 --
--- Name: users_email_index; Type: INDEX; Schema: public; Owner: www-data; Tablespace: 
+-- Name: users_email_index; Type: INDEX; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE INDEX users_email_index ON "Users" USING btree ("Email");
 
 
 --
--- Name: users_islockedout_index; Type: INDEX; Schema: public; Owner: www-data; Tablespace: 
+-- Name: users_islockedout_index; Type: INDEX; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE INDEX users_islockedout_index ON "Users" USING btree ("IsLockedOut");
 
 
 --
--- Name: tracks_title_index; Type: INDEX; Schema: public; Owner: www-data; Tablespace: 
+-- Name: tracks_title_index; Type: INDEX; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE INDEX tracks_title_index ON "Tracks" USING btree ("Title");
 
 
 --
--- Name: tracks_artist_index; Type: INDEX; Schema: public; Owner: www-data; Tablespace: 
+-- Name: tracks_artist_index; Type: INDEX; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE INDEX tracks_artist_index ON "Tracks" USING btree ("Artist");
 
 
 --
--- Name: tracks_album_index; Type: INDEX; Schema: public; Owner: www-data; Tablespace: 
+-- Name: tracks_album_index; Type: INDEX; Schema: public; Owner: neztu; Tablespace: 
 --
 
 CREATE INDEX tracks_album_index ON "Tracks" USING btree ("Album");
 
 
 --
--- Name: profiledata_profile_fkey; Type: FK CONSTRAINT; Schema: public; Owner: www-data
+-- Name: profiledata_profile_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neztu
 --
 
 ALTER TABLE ONLY "ProfileData"
@@ -326,7 +326,7 @@ ALTER TABLE ONLY "ProfileData"
 
 
 --
--- Name: profiles_username_fkey; Type: FK CONSTRAINT; Schema: public; Owner: www-data
+-- Name: profiles_username_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neztu
 --
 
 ALTER TABLE ONLY "Profiles"
@@ -334,7 +334,7 @@ ALTER TABLE ONLY "Profiles"
 
 
 --
--- Name: usersinroles_rolename_fkey; Type: FK CONSTRAINT; Schema: public; Owner: www-data
+-- Name: usersinroles_rolename_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neztu
 --
 
 ALTER TABLE ONLY "UsersInRoles"
@@ -342,7 +342,7 @@ ALTER TABLE ONLY "UsersInRoles"
 
 
 --
--- Name: usersinroles_username_fkey; Type: FK CONSTRAINT; Schema: public; Owner: www-data
+-- Name: usersinroles_username_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neztu
 --
 
 ALTER TABLE ONLY "UsersInRoles"
@@ -360,30 +360,30 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
--- Name: History; Type: ACL; Schema: public; Owner: www-data
+-- Name: History; Type: ACL; Schema: public; Owner: neztu
 --
 
 REVOKE ALL ON TABLE "History" FROM PUBLIC;
-REVOKE ALL ON TABLE "History" FROM "www-data";
-GRANT ALL ON TABLE "History" TO "www-data";
+REVOKE ALL ON TABLE "History" FROM "neztu";
+GRANT ALL ON TABLE "History" TO "neztu";
 
 
 --
--- Name: Tracks; Type: ACL; Schema: public; Owner: www-data
+-- Name: Tracks; Type: ACL; Schema: public; Owner: neztu
 --
 
 REVOKE ALL ON TABLE "Tracks" FROM PUBLIC;
-REVOKE ALL ON TABLE "Tracks" FROM "www-data";
-GRANT ALL ON TABLE "Tracks" TO "www-data";
+REVOKE ALL ON TABLE "Tracks" FROM "neztu";
+GRANT ALL ON TABLE "Tracks" TO "neztu";
 
 
 --
--- Name: Votes; Type: ACL; Schema: public; Owner: www-data
+-- Name: Votes; Type: ACL; Schema: public; Owner: neztu
 --
 
 REVOKE ALL ON TABLE "Votes" FROM PUBLIC;
-REVOKE ALL ON TABLE "Votes" FROM "www-data";
-GRANT ALL ON TABLE "Votes" TO "www-data";
+REVOKE ALL ON TABLE "Votes" FROM "neztu";
+GRANT ALL ON TABLE "Votes" TO "neztu";
 
 
 --
