@@ -1,10 +1,14 @@
-BUILDING FROM SOURCE:
+BUILDING NEZTU FROM SOURCE:
 1. Extract the Neztu distribution package.
 
-2. Build or download binaries for Neztu's dependencies.  Either install them
-into the GAC, or copy them into src/libs.
+2. The Neztu source package contains source and pre-compiled binaries for
+  Anthem.NET, TagLib# and AspSQLProvider under src/libs.  Npgsql is also needed,
+  but not included since it is distributed with Mono.  If your version of Npgsql
+  differs from the version used to compile PostgreSQLProviders.dll, you will
+  need to recompile PostgreSQLProviders.dll using src/libs/PgProviders/Makefile.
 
-3. Run 'make dist' in src.
+3. Run 'make dist' in src to build the binaries, install them into www/bin, and
+  build a tarball of the www directory.
 
 INSTALLING A BINARY PACKAGE:
 1. Create a directory to hold the application, and configure Mono/IIS
@@ -12,12 +16,11 @@ appropriately.  Remember that Neztu is an ASP.NET 2.0 application.
 
 2. Extract the contents of the distribution archive into this directory.
 
-3. Install dependencies into the GAC or into the bin subdirectory of the
-application directory.
-
-3. Modify web.config, bin/Daemon.exe.config, and bin/TagReader.exe.config as
-necessary.
+3. Modify .htaccess, web.config, bin/Daemon.exe.config, and
+  bin/TagReader.exe.config as necessary.
 
 DEPENDENCIES:
 TagLib# 2.0.3.0: http://www.taglib-sharp.com/Download/
 AspSQLProvider: http://dev.nauck-it.de/aspsqlprovider/
+Anthem.NET: http://anthem-dot.net.sourceforge.net/
+Npgsql: http://pgfoundry.org/projects/npgsql/

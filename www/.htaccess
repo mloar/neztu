@@ -1,4 +1,16 @@
 AddDefaultCharset utf-8
+
+RewriteEngine on
+# CONFIG: may need to change this
+RewriteBase /neztu
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+# This rule allows us to use extensionless paths, in
+# accordance with W3C recommendations.
+RewriteRule ^([^.]+)$ $1.aspx [PT]
+
+# CONFIG: if you want to use external auth, change
+# this section according to your environment
 <Files login.aspx>
   AuthType Basic
   AuthName "Neztu"
@@ -6,10 +18,3 @@ AddDefaultCharset utf-8
   require valid-user
 </Files>
 
-RewriteEngine on
-RewriteBase /neztu
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-# This rule allows us to use extensionless paths, in
-# accordance with W3C recommendations.
-RewriteRule ^([^.]+)$ $1.aspx [PT]
