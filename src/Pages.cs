@@ -268,21 +268,34 @@ public class IndexPage : Page
 {
   public Anthem.DataGrid QueueData;
   public DataGrid RandomTracks;
+  public Button MoreTracks;
   public Label StatusBar;
 
   public void Page_PreRender(object o, EventArgs e)
   {
     INeztuDatabase database = DatabaseHelper.GetDatabase();
-    IScheduler sched = new FIFOScheduler(null, database);
-    DataView dataView;
-
-    Vote[] queue = sched.GetSchedule();
-    dataView = new DataView();
+    IScheduler sched = new FIFOScheduler(database);
+    DataView dataView = new DataView();
     dataView.Table = new DataTable("Queue");
     dataView.Table.Columns.Add(new DataColumn("Track"));
     dataView.Table.Columns.Add(new DataColumn("Album"));
     dataView.Table.Columns.Add(new DataColumn("Length"));
     dataView.Table.Columns.Add(new DataColumn("Requested By"));
+    dataView.Table.Columns.Add(new DataColumn("Status"));
+
+    Vote[] pending = database.GetPending();
+    foreach (Vote v in pending)
+    {
+      DataRowView rowView = dataView.AddNew();
+      rowView["Track"] = v.ReqTrack.Title;
+      rowView["Album"] = v.ReqTrack.Album;
+      rowView["Length"] = v.ReqTrack.Length.ToString();
+      rowView["Requested By"] = v.UserName;
+      rowView["Status"] = "Pending";
+      rowView.EndEdit();
+    }
+
+    Vote[] queue = sched.GetSchedule();
     foreach (Vote v in queue)
     {
       DataRowView rowView = dataView.AddNew();
@@ -290,12 +303,13 @@ public class IndexPage : Page
       rowView["Album"] = v.ReqTrack.Album;
       rowView["Length"] = v.ReqTrack.Length.ToString();
       rowView["Requested By"] = v.UserName;
+      rowView["Status"] = "Queued";
       rowView.EndEdit();
     }
     QueueData.DataSource = dataView;
     QueueData.DataBind();
 
-    if (!Anthem.Manager.IsCallBack)
+    if (!Anthem.Manager.IsCallBack && !IsPostBack)
     {
       if (database is IRandomizableTrackDatabase)
       {
@@ -336,6 +350,37 @@ public class IndexPage : Page
       database.AddVote(User.Identity.Name, trackId);
 
     StatusBar.Text = string.Format("Voted for {0}.", t.Title);
+  }
+
+  public void MoreTracks_Click(object o, EventArgs e)
+  {
+    INeztuDatabase database = DatabaseHelper.GetDatabase();
+
+    if (database is IRandomizableTrackDatabase)
+    {
+      Track[] tracks = ((IRandomizableTrackDatabase)database).GetRandomTracks(10);
+
+      DataView dataView = new DataView();
+      dataView.Table = new DataTable("Tracks");
+      dataView.Table.Columns.Add(new DataColumn("TrackId"));
+      dataView.Table.Columns.Add(new DataColumn("Title"));
+      dataView.Table.Columns.Add(new DataColumn("Artist"));
+      dataView.Table.Columns.Add(new DataColumn("Album"));
+      dataView.Table.Columns.Add(new DataColumn("Length"));
+      foreach (Track t in tracks)
+      {
+        DataRowView rowView = dataView.AddNew();
+        rowView["TrackId"] = t.TrackId;
+        rowView["Title"] = t.Title;
+        rowView["Artist"] = t.Artist;
+        rowView["Album"] = t.Album;
+        rowView["Length"] = t.Length.ToString();
+        rowView.EndEdit();
+      }
+
+      RandomTracks.DataSource = dataView;
+      RandomTracks.DataBind();
+    }
   }
 }
 
@@ -407,7 +452,14 @@ public class MasterPage : System.Web.UI.MasterPage
     {
       NowPlayingTrack.Text = v.ReqTrack.Title;
       NowPlayingArtist.Text = v.ReqTrack.Artist;
-      NowPlayingTimer.Interval = (int)((v.ReqTrack.Length - (DateTime.Now - v.Timestamp)).TotalSeconds * 1000 + 2000);
+      int interval = (int)((v.ReqTrack.Length - (DateTime.Now - v.Timestamp)).TotalSeconds * 1000 + 2000);
+      if (interval < 2000)
+      {
+        // Something is borked.  Tell the client to check back in 10 seconds and hopefully it will fix itself.
+        interval = 10000;
+      }
+
+      NowPlayingTimer.Interval = interval;
       NowPlayingTimer.StartTimer();
     }
 

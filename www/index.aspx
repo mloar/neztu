@@ -7,6 +7,7 @@
     </div>
     <div id="randomtracks">
       <strong>Some random tracks for your voting pleasure:</strong>
+      <asp:Button id="MoreTracks" OnClick="MoreTracks_Click" Text="More Tracks" runat="server" />
       <asp:DataGrid id="RandomTracks" AutoGenerateColumns="false"
           OnItemCommand="RandomTracks_Command" runat="server">
         <columns>

@@ -29,6 +29,7 @@ namespace Neztu
   {
     private const string m_votesTable = "Votes";
     private const string m_historyTable = "History";
+    private const string m_pendingTable = "Pending";
     private const string m_tracksTable = "Tracks";
     private string m_connectionString = string.Empty;
 
@@ -37,7 +38,7 @@ namespace Neztu
     {
       // FIXME: This is stupid
 
-      Track ret;
+      Track ret = new Track();
       ret.TrackId = 0;
       ret.Filename = string.Empty;
       ret.Title = string.Empty;
@@ -47,7 +48,7 @@ namespace Neztu
       ret.DiscNumber = 0;
       ret.TrackNumber = 0;
       ret.Length = TimeSpan.Zero;
-      ret.UserName = string.Empty;
+      ret.Uploader = string.Empty;
 
       return ret;
     }
@@ -75,14 +76,14 @@ namespace Neztu
       if (!reader.IsDBNull(firstColumn + 8))
         ret.Length = new TimeSpan(0, 0, (int)reader.GetValue(firstColumn + 8));
       if (!reader.IsDBNull(firstColumn + 9))
-        ret.UserName = (string)reader.GetValue(firstColumn + 9);
+        ret.Uploader = (string)reader.GetValue(firstColumn + 9);
 
       return ret;
     }
 
     private Vote GetBlankVote()
     {
-      Vote ret;
+      Vote ret = new Vote();
       ret.UserName = string.Empty;
       ret.ReqTrack = GetBlankTrack();
       ret.Timestamp = DateTime.MinValue;
@@ -121,7 +122,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" WHERE \"TrackId\" = @TrackId",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\" WHERE \"TrackId\" = @TrackId",
               m_tracksTable);
 
           dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Integer, 0).Value = trackId;
@@ -164,7 +165,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" WHERE \"Filename\" = @Filename",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\" WHERE \"Filename\" = @Filename",
               m_tracksTable);
 
           dbCommand.Parameters.Add("@Filename", NpgsqlDbType.Varchar, 255).Value = filename;
@@ -207,7 +208,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\"",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\"",
               m_tracksTable);
 
           try
@@ -250,7 +251,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" ORDER BY random() LIMIT @Count",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\" ORDER BY random() LIMIT @Count",
               m_tracksTable);
           dbCommand.Parameters.Add("@Count", NpgsqlDbType.Integer, 0).Value = count;
 
@@ -292,7 +293,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\"",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\"",
               m_tracksTable);
 
           using(NpgsqlDataAdapter dbAdapter = new NpgsqlDataAdapter(dbCommand))
@@ -329,7 +330,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\" FROM \"{0}\" WHERE \"Title\" ~* @Title AND \"Artist\" ~* @Artist AND \"Album\" ~* @Album",
+              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\" WHERE \"Title\" ~* @Title AND \"Artist\" ~* @Artist AND \"Album\" ~* @Album",
               m_tracksTable);
 
           dbCommand.Parameters.Add("@Title", NpgsqlDbType.Varchar, 255).Value = title;
@@ -376,7 +377,7 @@ namespace Neztu
           using (NpgsqlCommand dbCommand2 = dbConn.CreateCommand())
           {
             dbCommand1.CommandText = string.Format(
-                "INSERT INTO \"{0}\" (\"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"UserName\") VALUES(@Filename, @Artist, @Title, @Album, @Genre, @DiscNumber, @TrackNumber, @Length, @UserName)",
+                "INSERT INTO \"{0}\" (\"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\") VALUES(@Filename, @Artist, @Title, @Album, @Genre, @DiscNumber, @TrackNumber, @Length, @Uploader)",
                 m_tracksTable);
 
             dbCommand1.Parameters.Add("@Filename", NpgsqlDbType.Varchar, 255).Value = newTrack.Filename;
@@ -387,7 +388,7 @@ namespace Neztu
             dbCommand1.Parameters.Add("@DiscNumber", NpgsqlDbType.Integer, 0).Value = newTrack.DiscNumber;
             dbCommand1.Parameters.Add("@TrackNumber", NpgsqlDbType.Integer, 0).Value = newTrack.TrackNumber;
             dbCommand1.Parameters.Add("@Length", NpgsqlDbType.Integer, 0).Value = (uint)newTrack.Length.TotalSeconds;
-            dbCommand1.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = newTrack.UserName;
+            dbCommand1.Parameters.Add("@Uploader", NpgsqlDbType.Varchar, 255).Value = newTrack.Uploader;
 
             dbCommand2.CommandText = string.Format(
                 "SELECT last_value FROM \"{0}_TrackId_seq\";",
@@ -439,7 +440,7 @@ namespace Neztu
         {
           dbCommand.CommandText = string.Format("DELETE FROM \"{0}\" WHERE \"TrackId\"=@TrackId)", m_tracksTable);
 
-          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = trackId.ToString();
+          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Integer, 0).Value = trackId.ToString();
 
           try
           {
@@ -469,7 +470,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"{0}\".\"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"{1}\".\"UserName\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" WHERE \"{0}\".\"UserName\"=@UserName ORDER BY \"Timestamp\"",
+              "SELECT \"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" WHERE \"UserName\"=@UserName ORDER BY \"Timestamp\"",
               m_votesTable, m_tracksTable);
 
           dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = userName;
@@ -483,7 +484,7 @@ namespace Neztu
             {
               while (reader.Read())
               {
-                Vote v;
+                Vote v = new Vote();
                 v.UserName = (string)reader.GetValue(0);
                 v.Timestamp = (DateTime)reader.GetValue(1);
                 v.ReqTrack = GetTrackData(reader, 2);
@@ -519,7 +520,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"{0}\".\"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"{1}\".\"UserName\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" ORDER BY \"Timestamp\"",
+              "SELECT \"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" ORDER BY \"Timestamp\"",
               m_votesTable, m_tracksTable);
 
           try
@@ -531,7 +532,7 @@ namespace Neztu
             {
               while (reader.Read())
               {
-                Vote v;
+                Vote v = new Vote();
                 v.UserName = (string)reader.GetValue(0);
                 v.Timestamp = (DateTime)reader.GetValue(1);
                 v.ReqTrack = GetTrackData(reader, 2);
@@ -569,7 +570,7 @@ namespace Neztu
               m_votesTable);
 
           dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = userName;
-          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = trackId;
+          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Integer, 0).Value = trackId;
 
           try
           {
@@ -601,7 +602,7 @@ namespace Neztu
               m_votesTable);
 
           dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = userName;
-          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = trackId;
+          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Integer, 0).Value = trackId;
           dbCommand.Parameters.Add("@Timestamp", NpgsqlDbType.Timestamp, 255).Value = DateTime.Now;
 
           try
@@ -643,10 +644,10 @@ namespace Neztu
 
               dbCommand1.Parameters.Add("@Timestamp", NpgsqlDbType.Timestamp, 255).Value = vote2.Timestamp;
               dbCommand1.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = vote1.UserName;
-              dbCommand1.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = vote1.ReqTrack.TrackId;
+              dbCommand1.Parameters.Add("@TrackId", NpgsqlDbType.Integer, 0).Value = vote1.ReqTrack.TrackId;
               dbCommand2.Parameters.Add("@Timestamp", NpgsqlDbType.Timestamp, 255).Value = vote1.Timestamp;
               dbCommand2.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = vote2.UserName;
-              dbCommand2.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = vote2.ReqTrack.TrackId;
+              dbCommand2.Parameters.Add("@TrackId", NpgsqlDbType.Integer, 0).Value = vote2.ReqTrack.TrackId;
 
               dbCommand1.Prepare();
               dbCommand2.Prepare();
@@ -682,7 +683,7 @@ namespace Neztu
       }
     }
 
-    public Vote[] GetHistory()
+    public Vote[] GetPending()
     {
       Queue ret = new Queue();
 
@@ -691,8 +692,8 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"{0}\".\"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"{1}\".\"UserName\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" ORDER BY \"Timestamp\"",
-              m_historyTable, m_tracksTable);
+              "SELECT \"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" ORDER BY \"Timestamp\"",
+              m_pendingTable, m_tracksTable);
 
           try
           {
@@ -703,7 +704,7 @@ namespace Neztu
             {
               while (reader.Read())
               {
-                Vote v;
+                Vote v = new Vote();
                 v.UserName = (string)reader.GetValue(0);
                 v.Timestamp = (DateTime)reader.GetValue(1);
                 v.ReqTrack = GetTrackData(reader, 2);
@@ -730,6 +731,121 @@ namespace Neztu
       return votes;
     }
 
+    public void AddPending(string userName, uint trackId)
+    {
+      using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
+      {
+        using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
+        {
+          dbCommand.CommandText = string.Format(
+              "INSERT INTO \"{0}\" (\"UserName\", \"TrackId\", \"Timestamp\") VALUES(@UserName, @TrackId, @Timestamp)",
+              m_pendingTable);
+
+          dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = userName;
+          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Integer, 0).Value = trackId;
+          dbCommand.Parameters.Add("@Timestamp", NpgsqlDbType.Timestamp, 255).Value = DateTime.Now;
+
+          try
+          {
+            dbConn.Open();
+            dbCommand.ExecuteNonQuery();
+          }
+          catch (NpgsqlException e)
+          {
+            Console.Error.WriteLine(e.ToString());
+            throw new PostgresBackendException("The database operation was aborted (see error log for details).");
+          }
+          finally
+          {
+            if (dbConn != null)
+              dbConn.Close();
+          }
+        }
+      }
+    }
+
+    public void RemovePending(string userName, uint trackId)
+    {
+      using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
+      {
+        using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
+        {
+          dbCommand.CommandText = string.Format(
+              "DELETE FROM \"{0}\" WHERE \"UserName\"=@UserName AND \"TrackId\"=@TrackId",
+              m_pendingTable);
+
+          dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = userName;
+          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Integer, 0).Value = trackId;
+          dbCommand.Parameters.Add("@Timestamp", NpgsqlDbType.Timestamp, 255).Value = DateTime.Now;
+
+          try
+          {
+            dbConn.Open();
+            dbCommand.ExecuteNonQuery();
+          }
+          catch (NpgsqlException e)
+          {
+            Console.Error.WriteLine(e.ToString());
+            throw new PostgresBackendException("The database operation was aborted (see error log for details).");
+          }
+          finally
+          {
+            if (dbConn != null)
+              dbConn.Close();
+          }
+        }
+      }
+    }
+
+    public Vote[] GetHistory()
+    {
+      Queue ret = new Queue();
+
+      using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
+      {
+        using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
+        {
+          dbCommand.CommandText = string.Format(
+              "SELECT \"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" ORDER BY \"Timestamp\"",
+              m_historyTable, m_tracksTable);
+
+          try
+          {
+            dbConn.Open();
+            dbCommand.Prepare();
+
+            using (NpgsqlDataReader reader = dbCommand.ExecuteReader())
+            {
+              while (reader.Read())
+              {
+                Vote v = new Vote();
+                v.UserName = (string)reader.GetValue(0);
+                v.Timestamp = (DateTime)reader.GetValue(1);
+                v.ReqTrack = GetTrackData(reader, 2);
+
+                ret.Enqueue(v);
+              }
+            }
+          }
+          catch (NpgsqlException e)
+          {
+            Console.Error.WriteLine(e.ToString());
+            throw new PostgresBackendException("The database operation was aborted (see error log for details).");
+          }
+          finally
+          {
+            if (dbConn != null)
+              dbConn.Close();
+          }
+        }
+      }
+
+      Vote[] votes = new Vote[ret.Count];
+      ret.CopyTo(votes, 0);
+      return votes;
+    }
+
+
     public void AddHistory(string userName, uint trackId)
     {
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
@@ -740,8 +856,8 @@ namespace Neztu
               "INSERT INTO \"{0}\" (\"UserName\", \"TrackId\", \"Timestamp\") VALUES(@UserName, @TrackId, @Timestamp)",
               m_historyTable);
 
-          dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 36).Value = userName;
-          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Varchar, 36).Value = trackId;
+          dbCommand.Parameters.Add("@UserName", NpgsqlDbType.Varchar, 255).Value = userName;
+          dbCommand.Parameters.Add("@TrackId", NpgsqlDbType.Integer, 0).Value = trackId;
           dbCommand.Parameters.Add("@Timestamp", NpgsqlDbType.Timestamp, 255).Value = DateTime.Now;
 
           try
@@ -772,7 +888,7 @@ namespace Neztu
         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
         {
           dbCommand.CommandText = string.Format(
-              "SELECT \"{0}\".\"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"{1}\".\"UserName\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" ORDER BY \"Timestamp\" DESC LIMIT 1",
+              "SELECT \"UserName\", \"Timestamp\", \"{0}\".\"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" ORDER BY \"Timestamp\" DESC LIMIT 1",
               m_historyTable, m_tracksTable);
 
           try

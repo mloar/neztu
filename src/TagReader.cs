@@ -74,7 +74,7 @@ namespace Neztu
             {
               Console.WriteLine("Attempting to read {0}...", file);
               Track t = ReadFile(file);
-              t.UserName = string.Empty;
+              t.Uploader = string.Empty;
               db.AddTrack(t);
             }
             else
@@ -159,7 +159,7 @@ namespace Neztu
         throw new ApplicationException("Taglib apparently ate it");
       }
 
-      Track ret;
+      Track ret = new Track();
       ret.TrackId = 0;
       ret.Filename = Path.GetFullPath(filename);
       ret.Title = tag.Title == null ? "" : tag.Title;
@@ -169,7 +169,7 @@ namespace Neztu
       ret.DiscNumber = tag.Disc;
       ret.TrackNumber = tag.Track;
       ret.Length = file.Properties.Duration;
-      ret.UserName = string.Empty;
+      ret.Uploader = string.Empty;
 
       return ret;
     }
@@ -184,7 +184,7 @@ namespace Neztu
         throw new ApplicationException("File has no readable tags");
       }
 
-      Track ret;
+      Track ret = new Track();
 
       ret.TrackId = 0;
       ret.Filename = filename;
@@ -195,7 +195,7 @@ namespace Neztu
       ret.DiscNumber = tag.Disc;
       ret.TrackNumber = tag.Track;
       ret.Length = file.Properties.Duration;
-      ret.UserName = string.Empty;
+      ret.Uploader = string.Empty;
 
       return ret;
     }

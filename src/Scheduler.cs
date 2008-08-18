@@ -15,7 +15,7 @@ namespace Neztu
 {
   public interface IScheduler
   {
-    Track PlayNext();
+    Vote GetNext();
     Vote[] GetSchedule();
   }
 
@@ -26,32 +26,22 @@ namespace Neztu
 
   public class FIFOScheduler : IScheduler
   {
-    private IRandomSelector m_randomSelector;
     private INeztuDatabase m_database;
 
-    public FIFOScheduler(IRandomSelector randomSelector, INeztuDatabase database)
+    public FIFOScheduler(INeztuDatabase database)
     {
-      m_randomSelector = randomSelector;
       m_database = database;
     }
 
-    public Track PlayNext()
+    public Vote GetNext()
     {
-      Track selected = m_randomSelector.GetRandom();
-
       Vote[] votes = m_database.GetVotes();
       if (votes.Length > 0)
       {
-        selected = votes[0].ReqTrack;
-        m_database.RemoveVote(votes[0].UserName, votes[0].ReqTrack.TrackId);
-        m_database.AddHistory(votes[0].UserName, votes[0].ReqTrack.TrackId);
-      }
-      else
-      {
-        m_database.AddHistory(string.Empty, selected.TrackId);
+        return votes[0];
       }
 
-      return selected;
+      return null;
     }
 
     public Vote[] GetSchedule()

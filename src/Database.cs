@@ -15,7 +15,7 @@ using System.Reflection;
 
 namespace Neztu
 {
-  public struct Track
+  public class Track
   {
     public uint TrackId;
     public string Filename;
@@ -26,10 +26,10 @@ namespace Neztu
     public uint DiscNumber;
     public uint TrackNumber;
     public TimeSpan Length;
-    public string UserName;
+    public string Uploader;
   }
 
-  public struct Vote
+  public class Vote
   {
     public string UserName;
     public Track ReqTrack;
@@ -54,6 +54,11 @@ namespace Neztu
     void AddVote(string userName, uint trackId);
     void RemoveVote(string userName, uint trackId);
     void SwapVotes(Vote vote1, Vote vote2);
+
+    // Pending management
+    Vote[] GetPending();
+    void AddPending(string userName, uint trackId);
+    void RemovePending(string userName, uint trackId);
 
     // History management
     Vote[] GetHistory();
