@@ -274,7 +274,8 @@ public class IndexPage : Page
   public void Page_PreRender(object o, EventArgs e)
   {
     INeztuDatabase database = DatabaseHelper.GetDatabase();
-    IScheduler sched = new FIFOScheduler(database);
+    IScheduler sched = DatabaseHelper.GetScheduler();
+
     DataView dataView = new DataView();
     dataView.Table = new DataTable("Queue");
     dataView.Table.Columns.Add(new DataColumn("Track"));

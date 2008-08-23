@@ -19,8 +19,8 @@ namespace Neztu
     public static int Main(string[] args)
     {
       INeztuDatabase database = DatabaseHelper.GetDatabase();
-      IRandomSelector randSel = new FullyRandomSelector(database);
-      IScheduler s = new FIFOScheduler(database);
+      IRandomSelector randSel = DatabaseHelper.GetRandomSelector();
+      IScheduler s = DatabaseHelper.GetScheduler();
 
       if (args.Length > 0)
       {

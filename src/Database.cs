@@ -71,7 +71,7 @@ namespace Neztu
     Track[] GetRandomTracks(uint count);
   }
 
-  public class DatabaseHelper
+  public abstract partial class DatabaseHelper
   {
     public static INeztuDatabase GetDatabase()
     {

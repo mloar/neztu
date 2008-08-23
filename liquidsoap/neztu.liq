@@ -9,18 +9,16 @@ neztu_random = fun () -> on_track(neztu_notify, request.dynamic({request.create(
 
 out = output.prefered()
 out(
-    add(
-      weights=[5,1],
-      [
-      input.harbor(id='announce', "announce"),
+  add(
+    weights=[5,1],
+    [
+    input.harbor(id='announce', "announce"),
       fallback([
-        fallback([
-          neztu_request(),
-          neztu_random(),
-          once(single("say:Welcome to Neztu!")),
-          delay(5.,single("say:We are experiencing technical difficulties.  Please stand by.")),
-          blank(duration=5.)
-          ])
-        ])
-      ])
-   )
+        neztu_request(),
+        neztu_random(),
+        once(single("say:Welcome to Neztu!")),
+        delay(5.,single("say:We are experiencing technical difficulties.  Please stand by.")),
+        blank(duration=5.)
+    ])
+  ])
+)

@@ -10,6 +10,8 @@
 //-----------------------------------------------------------------------------
 
 using System;
+using System.Configuration;
+using System.Reflection;
 
 namespace Neztu
 {
@@ -50,17 +52,35 @@ namespace Neztu
     }
   }
 
-  /*public class FairTimeScheduler : IScheduler
+  public class FairTimeScheduler : IScheduler
   {
-    private IRandomSelector m_randomSelector;
-    private IStateDatabase m_database;
+    private INeztuDatabase m_database;
 
-    public FairTimeScheduler(IRandomSelector randomSelector, IStateDatabase stateDb)
+    public FairTimeScheduler(INeztuDatabase database)
     {
-      m_randomSelector = randomSelector;
-      m_database = stateDb;
+      m_database = database;
     }
-  }*/
+
+    public Vote GetNext()
+    {
+      // TODO
+
+      Vote[] votes = m_database.GetVotes();
+      if (votes.Length > 0)
+      {
+        return votes[0];
+      }
+
+      return null;
+    }
+
+    public Vote[] GetSchedule()
+    {
+      // TODO
+
+      return m_database.GetVotes();
+    }
+  }
 
   public class FullyRandomSelector : IRandomSelector
   {
@@ -95,6 +115,45 @@ namespace Neztu
         int r = m_rng.Next(tracks.Length);
         return tracks[r];
       }
+    }
+  }
+
+  public abstract partial class DatabaseHelper
+  {
+    public static IScheduler GetScheduler()
+    {
+      string schedulerType = ConfigurationManager.AppSettings["SchedulerType"];
+      if (schedulerType == null)
+      {
+        throw new Exception("Scheduler type not specified");
+      }
+
+      Type type = Type.GetType(schedulerType);
+      if (type == null)
+      {
+        throw new Exception("Could not find scheduler type");
+      }
+
+      object[] args = {(INeztuDatabase)GetDatabase()};
+      return (IScheduler)type.InvokeMember(null, BindingFlags.CreateInstance, null, null, args);
+    }
+
+    public static IRandomSelector GetRandomSelector()
+    {
+      string randomSelectorType = ConfigurationManager.AppSettings["RandomSelectorType"];
+      if (randomSelectorType == null)
+      {
+        throw new Exception("Random selector type not specified");
+      }
+
+      Type type = Type.GetType(randomSelectorType);
+      if (type == null)
+      {
+        throw new Exception("Could not find random selector type");
+      }
+
+      object[] args = {(INeztuDatabase)GetDatabase()};
+      return (IRandomSelector)type.InvokeMember(null, BindingFlags.CreateInstance, null, null, args);
     }
   }
 }
