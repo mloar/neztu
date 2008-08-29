@@ -154,10 +154,6 @@ namespace Neztu
       {
         throw new ApplicationException("Broken symlink?");
       }
-      catch (NullReferenceException)
-      {
-        throw new ApplicationException("Taglib apparently ate it");
-      }
 
       Track ret = new Track();
       ret.TrackId = 0;
