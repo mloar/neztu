@@ -70,7 +70,7 @@ namespace Neztu
 
           try
           {
-            if (db.GetTrack(file).TrackId == 0)
+            if (db.GetTrack(file) == null)
             {
               Console.WriteLine("Attempting to read {0}...", file);
               Track t = ReadFile(file);
@@ -118,7 +118,6 @@ namespace Neztu
       foreach (string arg in args)
       {
         DoDirectory(db, arg);
-
       }
     }
 
