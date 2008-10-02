@@ -25,7 +25,7 @@ namespace Neztu
     }
   }
 
-  public class PostgresDatabase: INeztuDatabase, IRandomizableTrackDatabase
+  public class PostgresDatabase: INeztuDatabase, IRandomizableTrackDatabase, IPlayTimeTrackingDatabase
   {
     private const string m_votesTable = "Votes";
     private const string m_historyTable = "History";
@@ -33,29 +33,9 @@ namespace Neztu
     private const string m_tracksTable = "Tracks";
     private string m_connectionString = string.Empty;
 
-
-    private Track GetBlankTrack()
-    {
-      // FIXME: This is stupid
-
-      Track ret = new Track();
-      ret.TrackId = 0;
-      ret.Filename = string.Empty;
-      ret.Title = string.Empty;
-      ret.Artist = string.Empty;
-      ret.Album = string.Empty;
-      ret.Genre = string.Empty;
-      ret.DiscNumber = 0;
-      ret.TrackNumber = 0;
-      ret.Length = TimeSpan.Zero;
-      ret.Uploader = string.Empty;
-
-      return ret;
-    }
-
     private Track GetTrackData(NpgsqlDataReader reader, int firstColumn)
     {
-      Track ret = GetBlankTrack();
+      Track ret = new Track();
 
       if (!reader.IsDBNull(firstColumn))
         ret.TrackId = (uint)(int)reader.GetValue(firstColumn);
@@ -77,16 +57,6 @@ namespace Neztu
         ret.Length = new TimeSpan(0, 0, (int)reader.GetValue(firstColumn + 8));
       if (!reader.IsDBNull(firstColumn + 9))
         ret.Uploader = (string)reader.GetValue(firstColumn + 9);
-
-      return ret;
-    }
-
-    private Vote GetBlankVote()
-    {
-      Vote ret = new Vote();
-      ret.UserName = string.Empty;
-      ret.ReqTrack = GetBlankTrack();
-      ret.Timestamp = DateTime.MinValue;
 
       return ret;
     }
@@ -115,7 +85,7 @@ namespace Neztu
 
     public Track GetTrack(uint trackId)
     {
-      Track ret = GetBlankTrack();
+      Track ret = null;
 
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
@@ -145,11 +115,6 @@ namespace Neztu
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
           }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
-          }
         }
       }
 
@@ -158,7 +123,7 @@ namespace Neztu
 
     public Track GetTrack(string filename)
     {
-      Track ret = GetBlankTrack();
+      Track ret = null;
 
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
@@ -187,11 +152,6 @@ namespace Neztu
           {
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
-          }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
           }
         }
       }
@@ -228,11 +188,6 @@ namespace Neztu
           {
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
-          }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
           }
         }
       }
@@ -273,52 +228,12 @@ namespace Neztu
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
           }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
-          }
         }
       }
 
       Track[] tracks = new Track[ret.Count];
       ret.CopyTo(tracks, 0);
       return tracks;
-    }
-
-    public DataView GetTrackView()
-    {
-      using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
-      {
-        using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
-        {
-          dbCommand.CommandText = string.Format(
-              "SELECT \"TrackId\", \"Filename\", \"Artist\", \"Title\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\" FROM \"{0}\"",
-              m_tracksTable);
-
-          using(NpgsqlDataAdapter dbAdapter = new NpgsqlDataAdapter(dbCommand))
-          {
-            try
-            {
-              dbConn.Open();
-              DataSet dataSet = new DataSet();
-              dbAdapter.Fill(dataSet, "Tracks");
-              return new DataView(dataSet.Tables["Tracks"]);
-
-            }
-            catch (NpgsqlException e)
-            {
-              Console.Error.WriteLine(e.ToString());
-              throw new PostgresBackendException("The database operation was aborted (see error log for details).");
-            }
-            finally
-            {
-              if (dbConn != null)
-                dbConn.Close();
-            }
-          }
-        }
-      }
     }
 
     public Track[] GetTracks(string title, string artist, string album)
@@ -354,11 +269,6 @@ namespace Neztu
           {
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
-          }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
           }
         }
       }
@@ -420,11 +330,6 @@ namespace Neztu
               Console.Error.WriteLine(e.ToString());
               throw new PostgresBackendException("The database operation was aborted (see error log for details).");
             }
-            finally
-            {
-              if (dbConn != null)
-                dbConn.Close();
-            }
           }
         }
       }
@@ -451,11 +356,6 @@ namespace Neztu
           {
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
-          }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
           }
         }
       }
@@ -497,11 +397,6 @@ namespace Neztu
           {
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
-          }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
           }
         }
       }
@@ -546,11 +441,6 @@ namespace Neztu
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
           }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
-          }
         }
       }
 
@@ -582,11 +472,6 @@ namespace Neztu
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
           }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
-          }
         }
       }
     }
@@ -614,11 +499,6 @@ namespace Neztu
           {
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
-          }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
           }
         }
       }
@@ -675,11 +555,6 @@ namespace Neztu
           Console.Error.WriteLine(e.ToString());
           throw new PostgresBackendException("The database operation was aborted (see error log for details).");
         }
-        finally
-        {
-          if (dbConn != null)
-            dbConn.Close();
-        }
       }
     }
 
@@ -718,11 +593,6 @@ namespace Neztu
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
           }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
-          }
         }
       }
 
@@ -755,11 +625,6 @@ namespace Neztu
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
           }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
-          }
         }
       }
     }
@@ -787,11 +652,6 @@ namespace Neztu
           {
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
-          }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
           }
         }
       }
@@ -832,11 +692,6 @@ namespace Neztu
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
           }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
-          }
         }
       }
 
@@ -870,18 +725,13 @@ namespace Neztu
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
           }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
-          }
         }
       }
     }
 
     public Vote GetCurrent()
     {
-      Vote ret = GetBlankVote();
+      Vote ret = null;
 
       using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
       {
@@ -900,6 +750,7 @@ namespace Neztu
             {
               while (reader.Read())
               {
+                ret = new Vote();
                 ret.UserName = (string)reader.GetValue(0);
                 ret.Timestamp = (DateTime)reader.GetValue(1);
                 ret.ReqTrack = GetTrackData(reader, 2);
@@ -911,15 +762,51 @@ namespace Neztu
             Console.Error.WriteLine(e.ToString());
             throw new PostgresBackendException("The database operation was aborted (see error log for details).");
           }
-          finally
-          {
-            if (dbConn != null)
-              dbConn.Close();
-          }
         }
       }
 
       return ret;
+    }
+
+    public PlayTimeInfo[] GetPlayTime()
+    {
+      Queue ret = new Queue();
+
+      using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
+      {
+        using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
+        {
+          dbCommand.CommandText = string.Format(
+              "SELECT \"UserName\", SUM(\"Length\") AS \"PlayTime\" FROM \"{0}\" LEFT JOIN \"{1}\" ON \"{0}\".\"TrackId\"=\"{1}\".\"TrackId\" GROUP BY (\"UserName\") ORDER BY \"PlayTime\"",
+              m_historyTable, m_tracksTable);
+
+          try
+          {
+            dbConn.Open();
+            dbCommand.Prepare();
+
+            using (NpgsqlDataReader reader = dbCommand.ExecuteReader())
+            {
+              while (reader.Read())
+              {
+                PlayTimeInfo pti = new PlayTimeInfo();
+                pti.UserName = (string)reader.GetValue(0);
+                pti.PlayTime = new TimeSpan(0, 0, (int)reader.GetValue(1));
+                ret.Enqueue(pti);
+              }
+            }
+          }
+          catch (NpgsqlException e)
+          {
+            Console.Error.WriteLine(e.ToString());
+            throw new PostgresBackendException("The database operation was aborted (see error log for details).");
+          }
+        }
+      }
+
+      PlayTimeInfo[] playtime = new PlayTimeInfo[ret.Count];
+      ret.CopyTo(playtime, 0);
+      return playtime;
     }
   }
 }

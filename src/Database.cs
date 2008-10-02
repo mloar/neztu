@@ -36,14 +36,19 @@ namespace Neztu
     public DateTime Timestamp;
   }
 
+  public class PlayTimeInfo
+  {
+    public string UserName;
+    public TimeSpan PlayTime;
+  }
+
   public interface INeztuDatabase
   {
     // Track management
     Track GetTrack(uint trackId);
     Track GetTrack(string filename);
-    Track[] GetTracks(string title, string artist, string album);
     Track[] GetTracks();
-    DataView GetTrackView();
+    Track[] GetTracks(string title, string artist, string album);
 
     uint AddTrack(Track newTrack);
     void RemoveTrack(uint trackId);
@@ -69,6 +74,11 @@ namespace Neztu
   public interface IRandomizableTrackDatabase : INeztuDatabase
   {
     Track[] GetRandomTracks(uint count);
+  }
+
+  public interface IPlayTimeTrackingDatabase : INeztuDatabase
+  {
+    PlayTimeInfo[] GetPlayTime();
   }
 
   public abstract partial class DatabaseHelper

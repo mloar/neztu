@@ -54,9 +54,9 @@ namespace Neztu
 
   public class FairTimeScheduler : IScheduler
   {
-    private INeztuDatabase m_database;
+    private IPlayTimeTrackingDatabase m_database;
 
-    public FairTimeScheduler(INeztuDatabase database)
+    public FairTimeScheduler(IPlayTimeTrackingDatabase database)
     {
       m_database = database;
     }
@@ -64,13 +64,6 @@ namespace Neztu
     public Vote GetNext()
     {
       // TODO
-
-      Vote[] votes = m_database.GetVotes();
-      if (votes.Length > 0)
-      {
-        return votes[0];
-      }
-
       return null;
     }
 
@@ -84,37 +77,22 @@ namespace Neztu
 
   public class FullyRandomSelector : IRandomSelector
   {
-    private INeztuDatabase m_database;
-    private bool m_dbIsRandomizable;
-    private Random m_rng;
+    private IRandomizableTrackDatabase m_database;
 
-    public FullyRandomSelector(INeztuDatabase database)
+    public FullyRandomSelector(IRandomizableTrackDatabase database)
     {
-      if (database is IRandomizableTrackDatabase)
-      {
-        m_dbIsRandomizable = true;
-      }
-      else
-      {
-        m_rng = new Random();
-      }
-
       m_database = database;
     }
 
     public Track GetRandom()
     {
-      // FIXME: what if there are no tracks?
-      if (m_dbIsRandomizable)
+      Track[] tracks = m_database.GetRandomTracks(1);
+      if (tracks.Length > 0)
       {
-        return ((IRandomizableTrackDatabase)m_database).GetRandomTracks(1)[0];
+        return tracks[0];
       }
-      else
-      {
-        Track[] tracks = m_database.GetTracks();
-        int r = m_rng.Next(tracks.Length);
-        return tracks[r];
-      }
+
+      return null;
     }
   }
 
@@ -134,8 +112,21 @@ namespace Neztu
         throw new Exception("Could not find scheduler type");
       }
 
-      object[] args = {(INeztuDatabase)GetDatabase()};
-      return (IScheduler)type.InvokeMember(null, BindingFlags.CreateInstance, null, null, args);
+      object[] args = {GetDatabase()};
+      try
+      {
+        return (IScheduler)type.InvokeMember(null, BindingFlags.CreateInstance, null, null, args);
+      }
+      catch (MissingMethodException)
+      {
+        throw new Exception(
+            string.Format(
+              "Scheduler {0} is incompatible with database {1}",
+              type.ToString(),
+              args[0].GetType().ToString()
+              )
+            );
+      }
     }
 
     public static IRandomSelector GetRandomSelector()
@@ -152,8 +143,21 @@ namespace Neztu
         throw new Exception("Could not find random selector type");
       }
 
-      object[] args = {(INeztuDatabase)GetDatabase()};
-      return (IRandomSelector)type.InvokeMember(null, BindingFlags.CreateInstance, null, null, args);
+      object[] args = {GetDatabase()};
+      try
+      {
+        return (IRandomSelector)type.InvokeMember(null, BindingFlags.CreateInstance, null, null, args);
+      }
+      catch (MissingMethodException)
+      {
+        throw new Exception(
+            string.Format(
+              "Scheduler {0} is incompatible with database {1}",
+              type.ToString(),
+              args[0].GetType().ToString()
+              )
+            );
+      }
     }
   }
 }

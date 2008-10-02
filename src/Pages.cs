@@ -37,12 +37,14 @@ public class PlayListPage : Page
       DataView dataView = new DataView();
       dataView.Table = new DataTable("PlayList");
       dataView.Table.Columns.Add(new DataColumn("Track"));
+      dataView.Table.Columns.Add(new DataColumn("Artist"));
       dataView.Table.Columns.Add(new DataColumn("Album"));
       dataView.Table.Columns.Add(new DataColumn("Length"));
       foreach (Vote v in myVotes)
       {
         DataRowView rowView = dataView.AddNew();
         rowView["Track"] = v.ReqTrack.Title;
+        rowView["Artist"] = v.ReqTrack.Artist;
         rowView["Album"] = v.ReqTrack.Album;
         rowView["Length"] = v.ReqTrack.Length.ToString();
         rowView.EndEdit();
@@ -117,7 +119,7 @@ public class SearchPage : Page
     // This is a little kludgey, but it works
     uint trackId = uint.Parse(e.Item.Cells[1].Text);
     Track t = database.GetTrack(trackId);
-    if (t.TrackId == trackId)
+    if (t != null)
       database.AddVote(User.Identity.Name, trackId);
 
     StatusBar.Text = string.Format("Voted for {0}.", t.Title);
@@ -132,7 +134,7 @@ public class SearchPage : Page
       // This is a little kludgey, but it works
       uint trackId = uint.Parse(d.Cells[1].Text);
       Track t = database.GetTrack(trackId);
-      if (t.TrackId == trackId)
+      if (t != null)
         database.AddVote(User.Identity.Name, trackId);
     }
 
@@ -162,6 +164,7 @@ public class SearchPage : Page
     dataView.Table = new DataTable("Tracks");
     dataView.Table.Columns.Add(new DataColumn("TrackId"));
     dataView.Table.Columns.Add(new DataColumn("Title"));
+    dataView.Table.Columns.Add(new DataColumn("Artist"));
     dataView.Table.Columns.Add(new DataColumn("Album"));
     dataView.Table.Columns.Add(new DataColumn("Length"));
     foreach (Track t in tracks)
@@ -169,6 +172,7 @@ public class SearchPage : Page
       DataRowView rowView = dataView.AddNew();
       rowView["TrackId"] = t.TrackId;
       rowView["Title"] = t.Title;
+      rowView["Artist"] = t.Artist;
       rowView["Album"] = t.Album;
       rowView["Length"] = t.Length.ToString();
       rowView.EndEdit();
@@ -279,6 +283,7 @@ public class IndexPage : Page
     DataView dataView = new DataView();
     dataView.Table = new DataTable("Queue");
     dataView.Table.Columns.Add(new DataColumn("Track"));
+    dataView.Table.Columns.Add(new DataColumn("Artist"));
     dataView.Table.Columns.Add(new DataColumn("Album"));
     dataView.Table.Columns.Add(new DataColumn("Length"));
     dataView.Table.Columns.Add(new DataColumn("Requested By"));
@@ -289,6 +294,7 @@ public class IndexPage : Page
     {
       DataRowView rowView = dataView.AddNew();
       rowView["Track"] = v.ReqTrack.Title;
+      rowView["Artist"] = v.ReqTrack.Artist;
       rowView["Album"] = v.ReqTrack.Album;
       rowView["Length"] = v.ReqTrack.Length.ToString();
       rowView["Requested By"] = v.UserName;
@@ -301,6 +307,7 @@ public class IndexPage : Page
     {
       DataRowView rowView = dataView.AddNew();
       rowView["Track"] = v.ReqTrack.Title;
+      rowView["Artist"] = v.ReqTrack.Artist;
       rowView["Album"] = v.ReqTrack.Album;
       rowView["Length"] = v.ReqTrack.Length.ToString();
       rowView["Requested By"] = v.UserName;
@@ -347,7 +354,7 @@ public class IndexPage : Page
     // This is a little kludgey, but it works
     uint trackId = uint.Parse(e.Item.Cells[1].Text);
     Track t = database.GetTrack(trackId);
-    if (t.TrackId == trackId)
+    if (t != null)
       database.AddVote(User.Identity.Name, trackId);
 
     StatusBar.Text = string.Format("Voted for {0}.", t.Title);
@@ -476,9 +483,7 @@ public class MasterPage : System.Web.UI.MasterPage
   {
     if (Context.User.IsInRole("Administrators"))
     {
-      Process.Start(ConfigurationManager.AppSettings["StartCommand"], ConfigurationManager.AppSettings["StartArgs"]);
-      // Hack to get proper "Now Playing" output
-      Thread.Sleep(1000);
+      Process.Start(ConfigurationManager.AppSettings["StartCommand"], ConfigurationManager.AppSettings["StartArgs"]).WaitForExit();
     }
   }
 
@@ -497,9 +502,7 @@ public class MasterPage : System.Web.UI.MasterPage
   {
     if (Context.User.IsInRole("Administrators"))
     {
-      Process.Start(ConfigurationManager.AppSettings["SkipCommand"], ConfigurationManager.AppSettings["SkipArgs"]);
-      // Hack to get proper "Now Playing" output
-      Thread.Sleep(1000);
+      Process.Start(ConfigurationManager.AppSettings["SkipCommand"], ConfigurationManager.AppSettings["SkipArgs"]).WaitForExit();
     }
   }
 }
