@@ -24,7 +24,7 @@ class Vote
 public:
   std::string UserName;
   Track ReqTrack;
-  unsigned int Timestamp;
+  std::string Timestamp;
 };
 
 class Database

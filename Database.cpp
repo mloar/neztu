@@ -75,6 +75,25 @@ public:
 };
 
 // g++ won't let me make these function-local - not sure if I'm doing something wrong or not
+class AddVoteFunctor : public pqxx::transactor<>
+{
+  const char *m_username;
+  const char *m_trackId;
+
+public:
+  explicit AddVoteFunctor(const char *username, const char *trackId) :
+    m_username(username),
+    m_trackId(trackId)
+  {
+  }
+
+  void operator()(argument_type &T)
+  {
+    T.exec(std::string("INSERT INTO \"Votes\" VALUES('") + T.esc(m_username) + "', " + m_trackId + ")");
+  }
+};
+
+// g++ won't let me make these function-local - not sure if I'm doing something wrong or not
 class GetTrackByFilenameFunctor : public pqxx::transactor<>
 {
   Track *m_track;
@@ -218,6 +237,84 @@ public:
 };
 
 // g++ won't let me make these function-local - not sure if I'm doing something wrong or not
+class SearchTracksFunctor : public pqxx::transactor<>
+{
+  const char *m_title;
+  const char *m_artist;
+  const char *m_album;
+  std::vector<Track> *m_tracks;
+
+public:
+  explicit SearchTracksFunctor(std::vector<Track> *tracks, const char *title, const char *artist, const char *album) :
+    m_tracks(tracks),
+    m_title(title),
+    m_artist(artist),
+    m_album(album)
+  {
+  }
+
+  void operator()(argument_type &T)
+  {
+    pqxx::result R = T.prepared("search")(m_title)(m_artist)(m_album).exec();
+    if (R.empty())
+    {
+      m_tracks->resize(0);
+    }
+    else
+    {
+      m_tracks->resize(R.size());
+      for (size_t j = 0; j < R.size(); j++)
+      {
+        // XXX lookup by column name does not appear to work
+        for (size_t i = 0; i < R[j].size(); i++)
+        {
+          if (!strcmp(R[j][i].name(), "TrackId"))
+          {
+            R[j][i].to((*m_tracks)[j].TrackId);
+          }
+          else if (!strcmp(R[j][i].name(), "Filename"))
+          {
+            R[j][i].to((*m_tracks)[j].Filename);
+          }
+          else if (!strcmp(R[j][i].name(), "Title"))
+          {
+            R[j][i].to((*m_tracks)[j].Title);
+          }
+          else if (!strcmp(R[j][i].name(), "Artist"))
+          {
+            R[j][i].to((*m_tracks)[j].Artist);
+          }
+          else if (!strcmp(R[j][i].name(), "Album"))
+          {
+            R[j][i].to((*m_tracks)[j].Album);
+          }
+          else if (!strcmp(R[j][i].name(), "Genre"))
+          {
+            R[j][i].to((*m_tracks)[j].Genre);
+          }
+          else if (!strcmp(R[j][i].name(), "DiscNumber"))
+          {
+            R[j][i].to((*m_tracks)[j].DiscNumber);
+          }
+          else if (!strcmp(R[j][i].name(), "TrackNumber"))
+          {
+            R[j][i].to((*m_tracks)[j].TrackNumber);
+          }
+          else if (!strcmp(R[j][i].name(), "Length"))
+          {
+            R[j][i].to((*m_tracks)[j].Length);
+          }
+          else if (!strcmp(R[j][i].name(), "Uploader"))
+          {
+            R[j][i].to((*m_tracks)[j].Uploader);
+          }
+        }
+      }
+    }
+  }
+};
+
+// g++ won't let me make these function-local - not sure if I'm doing something wrong or not
 class GetVotesFunctor : public pqxx::transactor<>
 {
   std::vector<Vote> *m_votes;
@@ -300,6 +397,7 @@ public:
 Database::Database() :
   m_conn("host=localhost user=neztu password=passw0rd dbname=neztu")
 {
+  m_conn.prepare("search", "SELECT * FROM \"Tracks\" WHERE \"Title\" ~* $1 AND \"Artist\" ~* $2 AND \"Album\" ~* $3")("varchar", prepare::treat_string)("varchar", prepare::treat_string)("varchar", prepare::treat_string);
 }
 
 Track Database::GetTrack(unsigned int TrackId)
@@ -327,9 +425,19 @@ void Database::GetTracks(std::vector<Track> *out)
 
 void Database::GetTracks(std::vector<Track> *out, const std::string &title, const std::string &artist, const std::string &album)
 {
+  m_conn.perform(SearchTracksFunctor(out, title.c_str(), artist.c_str(), album.c_str()));
 }
 
 void Database::GetVotes(std::vector<Vote> *out)
 {
   m_conn.perform(GetVotesFunctor(out));
+}
+
+void Database::AddVote(std::string username, unsigned int trackid)
+{
+  std::vector<char> trackId;
+  trackId.resize(12);
+  snprintf(&trackId[0], 12, "%d", trackid);
+
+  m_conn.perform(AddVoteFunctor(username.c_str(), &trackId[0]));
 }
