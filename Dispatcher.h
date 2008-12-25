@@ -6,10 +6,11 @@ public:
   Dispatcher();
   void Dispatch(cgicc::FCgiIO&);
 
-  typedef void(*path_handler)(cgicc::FCgiIO&);
+  typedef void(*path_handler)(cgicc::FCgiIO&, cgicc::Cgicc&, Database&);
 
 private:
-  typedef std::map<std::string, path_handler > PathMap;
+  typedef std::map<std::string, path_handler> PathMap;
   PathMap m_paths;
+  Database m_db;
 };
 #endif

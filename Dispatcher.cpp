@@ -1,12 +1,13 @@
 #include <map>
 #include <memory>
+#include <iomanip>
 #include <cgicc/Cgicc.h>
 #include "cgicc/HTTPHTMLHeader.h"
 #include "cgicc/HTMLClasses.h"
 
 #include "FCgiIO.h"
-#include "Dispatcher.h"
 #include "Database.h"
+#include "Dispatcher.h"
 
 using namespace cgicc;
 using namespace std;
@@ -17,30 +18,31 @@ class NeztuHeading : public cgicc::MStreamable
     virtual void render(std::ostream& out) const
     {
       // Send HTTP header
-      out << HTTPHTMLHeader() << endl;
+      out << "Content-Type: text/html; charset=utf-8\r\n\r\n";
 
       // Set up the HTML document
       out << HTMLDoctype() << endl;
       out << html() << head(title("Neztu!")).add(cgicc::link(set("href", "resources/main.css").set("type", "text/css").set("rel", "stylesheet"))) << endl;
       out << body() << endl;
 
-      out << "<div id=\"header\"><img src=\"resources/banner.jpg\" alt=\"Neztu!\"></div>" << endl;
+      out << "<div id=\"header\"><img src=\"resources/banner.jpg\" alt=\"Neztu!\">" << endl;
+      out << "<table id=\"menu\">";
+      out << "<tr><td><a href=\"./\">Home</a></td><td><a href=\"playlist\">Your Playlist</a></td><td><a href=\"search\">Search Tracks</a></td><td><a href=\"add\">Add Tracks</a></td></tr>";
+      out << "</table></div>";
     }
 };
 
-template<typename _CharT, typename _Traits>
-  inline basic_ostream<_CharT, _Traits>&
-operator<<(basic_ostream<_CharT, _Traits>& __os, const NeztuHeading &heading)
+class NeztuFooter : public cgicc::MStreamable
 {
-  heading.render(__os);
-  return __os;
-}
+  public:
+    virtual void render(std::ostream& out) const
+    {
+      out << body() << html();
+    }
+};
 
-void vote_handler(cgicc::FCgiIO &io)
+void vote_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
 {
-  cgicc::Cgicc cgi(&io);
-  cgicc::CgiEnvironment cgienv(&io);
-
   cgicc::form_iterator iter = cgi["trackId"];
   if (iter != cgi.getElements().end())
   {
@@ -48,36 +50,77 @@ void vote_handler(cgicc::FCgiIO &io)
     std::stringstream str(cgi["trackId"]->getValue());
     str >> trackId;
 
-    Database db;
-    db.AddVote(cgienv.getRemoteUser(), trackId);
+    db.AddVote(cgi.getEnvironment().getRemoteUser(), trackId);
   }
 
   io << "Status: 204 No Content\r\n\r\n";
 }
 
-void index_handler(cgicc::FCgiIO &io)
+void index_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
 {
   io << NeztuHeading() << endl;
 
-  Database db;
   std::vector<Vote> votes;
   db.GetVotes(&votes);
-  io << "<table>" << endl << "<tr><th>Title</th><th>Voted By</th></tr>" << endl;
+  io << "<table><caption>Queue</caption>" << endl << "<tr><th>Title</th><th>Voted By</th></tr>" << endl;
   for (std::vector<Vote>::iterator iter = votes.begin(); iter != votes.end(); iter++)
   {
     io << "<tr><td>" << iter->ReqTrack.Title << "</td><td>" << iter->UserName << "</td></tr>" << endl;
   }
   io << "</table>" << endl;
 
-  // Close the HTML document
-  io << body() << html();
+  io << NeztuFooter();
 }
 
-void search_handler(cgicc::FCgiIO &io)
+void playlist_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
 {
   io << NeztuHeading() << endl;
 
-  cgicc::Cgicc cgi(&io);
+  cgicc::form_iterator swap = cgi["swap"];
+  if (swap != cgi.getElements().end() && swap->getValue() == "yes")
+  {
+    cgicc::form_iterator track1 = cgi["track1"], track2 = cgi["track2"];
+    if (track1 != cgi.getElements().end() && track2 != cgi.getElements().end())
+    {
+      std::stringstream trackIdStr1(track1->getValue()), trackIdStr2(track2->getValue());
+      unsigned int trackId1, trackId2;
+      trackIdStr1 >> trackId1;
+      trackIdStr2 >> trackId2;
+    }
+  }
+
+  std::vector<Vote> votes;
+  db.GetVotes(&votes, cgi.getEnvironment().getRemoteUser());
+
+  io << "<table border=\"1\"><caption>Your Playlist</caption>" << endl;
+  io << "<tr><th></th><th></th><th>Title</th><th>Artist</th><th>Length</th></tr>" << endl;
+  unsigned int lastTrackId = 0;
+  for (std::vector<Vote>::iterator iter = votes.begin(); iter != votes.end(); iter++)
+  {
+    io << "<tr><td>";
+    if (lastTrackId)
+    {
+      io << "<a href=\"?swap=yes&track1=" << lastTrackId << "&track2=" << iter->ReqTrack.TrackId << "\">Up</a>";
+    }
+    io << "</td><td><a href=\"?remove=yes&track1=" << iter->ReqTrack.TrackId << "\">Remove</td>";
+    io << "<td>" << iter->ReqTrack.Title << "</td>";
+    io << "<td>" << iter->ReqTrack.Artist << "</td>";
+    io << "<td>";
+    io << setw(2) << setfill('0') << iter->ReqTrack.Length / 3600 << ":";
+    io << setw(2) << setfill('0') << (iter->ReqTrack.Length % 3600) / 60 << ":";
+    io << setw(2) << setfill('0') << (iter->ReqTrack.Length % 60) << "</td></tr>" << endl;
+
+    lastTrackId = iter->ReqTrack.TrackId;
+  }
+  io << "</table>" << endl;
+
+  io << NeztuFooter();
+}
+
+void search_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
+{
+  io << NeztuHeading() << endl;
+
   std::string title, artist, album;
   {
     cgicc::form_iterator iter = cgi["title"];
@@ -101,25 +144,26 @@ void search_handler(cgicc::FCgiIO &io)
     }
   }
 
-
   // XXX replace with cgicc stuff (maybe)
-  // XXX cgicc throws an exception trying to parse POST data - this needs investigation
-  io << "<form method=\"GET\">";
-  io << "<strong>Title</strong><input type=\"text\" name=\"title\" value=\"" << title << "\">";
-  io << "<strong>Artist</strong><input type=\"text\" name=\"artist\" value=\"" << artist << "\">";
-  io << "<strong>Album</strong><input type=\"text\" name=\"album\" value=\"" << album << "\">";
-  io << "<input type=\"submit\"></form>";
+  io << "<div id=\"searchbox\">";
+  io << "<form method=\"POST\">";
+  io << "<table><tr><th>Title</th><th>Artist</th><th>Album</th><th></th></tr>";
+  io << "<tr><td><input type=\"text\" name=\"title\" value=\"" << title << "\"></td>";
+  io << "<td><input type=\"text\" name=\"artist\" value=\"" << artist << "\"></td>";
+  io << "<td><input type=\"text\" name=\"album\" value=\"" << album << "\"></td>";
+  io << "<td><input type=\"submit\" value=\"Search\"></td></tr></table>";
+  io << "</form>";
 
   if (!title.empty() || !artist.empty() || !album.empty())
   {
-    Database db;
     std::vector<Track> tracks;
     db.GetTracks(&tracks, title.c_str(), artist.c_str(), album.c_str());
     if (!tracks.empty())
     {
-      io << "<table><th></th><th>Title</th><th>Artist</th><th>Album</th></tr>";
+      io << "<table border=\"1\"><th></th><th>Title</th><th>Artist</th><th>Album</th></tr>";
       for (std::vector<Track>::iterator iter = tracks.begin(); iter != tracks.end(); iter++)
       {
+        // XXX need a method of providing confirmation that vote was recorded
         io << "<tr><td><a href=\"vote?trackId=" << iter->TrackId << "\">Vote</a></td>";
         io << "<td>" << iter->Title << "</td><td>" << iter->Artist << "</td><td>" << iter->Album << "</td></tr>";
       }
@@ -127,19 +171,19 @@ void search_handler(cgicc::FCgiIO &io)
     }
     else
     {
-      io << "No tracks found.";
+      io << "<p>No tracks found.</p>";
     }
   }
 
-  // Close the HTML document
-  io << body() << html();
+  io << "</div>";
+
+  io << NeztuFooter();
 }
 
-void test_handler(cgicc::FCgiIO &io)
+void test_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
 {
   io << NeztuHeading() << endl;
 
-  Database db;
   Track t = db.GetTrack(3200);
   io << t.Title.c_str() << " by " << t.Artist.c_str() << endl;
   t = db.GetTrack("/home/matt/winfiles/Music/Cat Power/Moon Pix/Cat Power_Moon Pix_11_Peking Saint.mp3");
@@ -153,11 +197,10 @@ void test_handler(cgicc::FCgiIO &io)
     io << iter->Title << "<br>";
   }
 
-  // Close the HTML document
-  io << body() << html();
+  io << NeztuFooter();
 }
 
-void resource_handler(cgicc::FCgiIO &io)
+void resource_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database&)
 {
   // XXX improve this
   static std::map<std::string, std::string> m_contentTypes;
@@ -167,8 +210,7 @@ void resource_handler(cgicc::FCgiIO &io)
     m_contentTypes.insert(std::make_pair(".jpg", "image/jpeg"));
   }
 
-  cgicc::CgiEnvironment cgienv(&io);
-  std::string path = cgienv.getPathTranslated();
+  std::string path = cgi.getEnvironment().getPathTranslated();
   std::map<std::string, std::string>::iterator iter = m_contentTypes.find(path.substr(path.rfind('.')));
   if (iter == m_contentTypes.end())
   {
@@ -187,6 +229,7 @@ Dispatcher::Dispatcher()
 {
   m_paths.insert(std::make_pair("/vote", vote_handler));
   m_paths.insert(std::make_pair("/test", test_handler));
+  m_paths.insert(std::make_pair("/playlist", playlist_handler));
   m_paths.insert(std::make_pair("/search", search_handler));
   m_paths.insert(std::make_pair("/resources/banner.jpg", resource_handler));
   m_paths.insert(std::make_pair("/resources/main.css", resource_handler));
@@ -198,12 +241,11 @@ void Dispatcher::Dispatch(cgicc::FCgiIO &io)
 {
   try
   {
-    //cgicc::Cgicc cgi(&io);
-    cgicc::CgiEnvironment cgienv(&io);
-    PathMap::iterator iter = m_paths.find(cgienv.getPathInfo());
+    cgicc::Cgicc cgi(&io);
+    PathMap::iterator iter = m_paths.find(cgi.getEnvironment().getPathInfo());
     if (iter != m_paths.end())
     {
-      iter->second(io);
+      iter->second(io, cgi, m_db);
     }
     else
     {

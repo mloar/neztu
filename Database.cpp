@@ -3,6 +3,71 @@
 
 using namespace pqxx;
 
+void PopulateTrack(Track *track, const result::tuple &tuple)
+{
+  // XXX lookup by column name does not appear to work
+  for (size_t i = 0; i < tuple.size(); i++)
+  {
+    if (!strcmp(tuple[i].name(), "TrackId"))
+    {
+      tuple[i].to(track->TrackId);
+    }
+    else if (!strcmp(tuple[i].name(), "Filename"))
+    {
+      tuple[i].to(track->Filename);
+    }
+    else if (!strcmp(tuple[i].name(), "Title"))
+    {
+      tuple[i].to(track->Title);
+    }
+    else if (!strcmp(tuple[i].name(), "Artist"))
+    {
+      tuple[i].to(track->Artist);
+    }
+    else if (!strcmp(tuple[i].name(), "Album"))
+    {
+      tuple[i].to(track->Album);
+    }
+    else if (!strcmp(tuple[i].name(), "Genre"))
+    {
+      tuple[i].to(track->Genre);
+    }
+    else if (!strcmp(tuple[i].name(), "DiscNumber"))
+    {
+      tuple[i].to(track->DiscNumber);
+    }
+    else if (!strcmp(tuple[i].name(), "TrackNumber"))
+    {
+      tuple[i].to(track->TrackNumber);
+    }
+    else if (!strcmp(tuple[i].name(), "Length"))
+    {
+      tuple[i].to(track->Length);
+    }
+    else if (!strcmp(tuple[i].name(), "Uploader"))
+    {
+      tuple[i].to(track->Uploader);
+    }
+  }
+}
+
+void PopulateVote(Vote *vote, const result::tuple &tuple)
+{
+  // XXX lookup by column name does not appear to work
+  for (size_t i = 0; i < tuple.size(); i++)
+  {
+    if (!strcmp(tuple[i].name(), "UserName"))
+    {
+      tuple[i].to(vote->UserName);
+    }
+    else if (!strcmp(tuple[i].name(), "Timestamp"))
+    {
+      tuple[i].to(vote->Timestamp);
+    }
+  }
+  PopulateTrack(&vote->ReqTrack, tuple);
+}
+
 // g++ won't let me make these function-local - not sure if I'm doing something wrong or not
 class GetTrackFunctor : public pqxx::transactor<>
 {
@@ -26,50 +91,7 @@ public:
     }
     else
     {
-      // XXX lookup by column name does not appear to work
-      for (size_t i = 0; i < R[0].size(); i++)
-      {
-        if (!strcmp(R[0][i].name(), "TrackId"))
-        {
-          R[0][i].to(m_track->TrackId);
-        }
-        else if (!strcmp(R[0][i].name(), "Filename"))
-        {
-          R[0][i].to(m_track->Filename);
-        }
-        else if (!strcmp(R[0][i].name(), "Title"))
-        {
-          R[0][i].to(m_track->Title);
-        }
-        else if (!strcmp(R[0][i].name(), "Artist"))
-        {
-          R[0][i].to(m_track->Artist);
-        }
-        else if (!strcmp(R[0][i].name(), "Album"))
-        {
-          R[0][i].to(m_track->Album);
-        }
-        else if (!strcmp(R[0][i].name(), "Genre"))
-        {
-          R[0][i].to(m_track->Genre);
-        }
-        else if (!strcmp(R[0][i].name(), "DiscNumber"))
-        {
-          R[0][i].to(m_track->DiscNumber);
-        }
-        else if (!strcmp(R[0][i].name(), "TrackNumber"))
-        {
-          R[0][i].to(m_track->TrackNumber);
-        }
-        else if (!strcmp(R[0][i].name(), "Length"))
-        {
-          R[0][i].to(m_track->Length);
-        }
-        else if (!strcmp(R[0][i].name(), "Uploader"))
-        {
-          R[0][i].to(m_track->Uploader);
-        }
-      }
+      PopulateTrack(m_track, R[0]);
     }
   }
 };
@@ -90,6 +112,26 @@ public:
   void operator()(argument_type &T)
   {
     T.exec(std::string("INSERT INTO \"Votes\" VALUES('") + T.esc(m_username) + "', " + m_trackId + ")");
+  }
+};
+
+// g++ won't let me make these function-local - not sure if I'm doing something wrong or not
+class SwapVotesFunctor : public pqxx::transactor<>
+{
+  Vote m_vote1;
+  Vote m_vote2;
+
+public:
+  explicit SwapVotesFunctor(const Vote &vote1, const Vote &vote2) :
+    m_vote1(vote1),
+    m_vote2(vote2)
+  {
+  }
+
+  void operator()(argument_type &T)
+  {
+    T.prepared("swap")(m_vote2.Timestamp)(m_vote1.UserName)(m_vote1.ReqTrack.TrackId).exec();
+    T.prepared("swap")(m_vote1.Timestamp)(m_vote2.UserName)(m_vote2.ReqTrack.TrackId).exec();
   }
 };
 
@@ -116,50 +158,7 @@ public:
     }
     else
     {
-      // XXX lookup by column name does not appear to work
-      for (size_t i = 0; i < R[0].size(); i++)
-      {
-        if (!strcmp(R[0][i].name(), "TrackId"))
-        {
-          R[0][i].to(m_track->TrackId);
-        }
-        else if (!strcmp(R[0][i].name(), "Filename"))
-        {
-          R[0][i].to(m_track->Filename);
-        }
-        else if (!strcmp(R[0][i].name(), "Title"))
-        {
-          R[0][i].to(m_track->Title);
-        }
-        else if (!strcmp(R[0][i].name(), "Artist"))
-        {
-          R[0][i].to(m_track->Artist);
-        }
-        else if (!strcmp(R[0][i].name(), "Album"))
-        {
-          R[0][i].to(m_track->Album);
-        }
-        else if (!strcmp(R[0][i].name(), "Genre"))
-        {
-          R[0][i].to(m_track->Genre);
-        }
-        else if (!strcmp(R[0][i].name(), "DiscNumber"))
-        {
-          R[0][i].to(m_track->DiscNumber);
-        }
-        else if (!strcmp(R[0][i].name(), "TrackNumber"))
-        {
-          R[0][i].to(m_track->TrackNumber);
-        }
-        else if (!strcmp(R[0][i].name(), "Length"))
-        {
-          R[0][i].to(m_track->Length);
-        }
-        else if (!strcmp(R[0][i].name(), "Uploader"))
-        {
-          R[0][i].to(m_track->Uploader);
-        }
-      }
+      PopulateTrack(m_track, R[0]);
     }
   }
 };
@@ -187,50 +186,7 @@ public:
       m_tracks->resize(R.size());
       for (size_t j = 0; j < R.size(); j++)
       {
-        // XXX lookup by column name does not appear to work
-        for (size_t i = 0; i < R[j].size(); i++)
-        {
-          if (!strcmp(R[j][i].name(), "TrackId"))
-          {
-            R[j][i].to((*m_tracks)[j].TrackId);
-          }
-          else if (!strcmp(R[j][i].name(), "Filename"))
-          {
-            R[j][i].to((*m_tracks)[j].Filename);
-          }
-          else if (!strcmp(R[j][i].name(), "Title"))
-          {
-            R[j][i].to((*m_tracks)[j].Title);
-          }
-          else if (!strcmp(R[j][i].name(), "Artist"))
-          {
-            R[j][i].to((*m_tracks)[j].Artist);
-          }
-          else if (!strcmp(R[j][i].name(), "Album"))
-          {
-            R[j][i].to((*m_tracks)[j].Album);
-          }
-          else if (!strcmp(R[j][i].name(), "Genre"))
-          {
-            R[j][i].to((*m_tracks)[j].Genre);
-          }
-          else if (!strcmp(R[j][i].name(), "DiscNumber"))
-          {
-            R[j][i].to((*m_tracks)[j].DiscNumber);
-          }
-          else if (!strcmp(R[j][i].name(), "TrackNumber"))
-          {
-            R[j][i].to((*m_tracks)[j].TrackNumber);
-          }
-          else if (!strcmp(R[j][i].name(), "Length"))
-          {
-            R[j][i].to((*m_tracks)[j].Length);
-          }
-          else if (!strcmp(R[j][i].name(), "Uploader"))
-          {
-            R[j][i].to((*m_tracks)[j].Uploader);
-          }
-        }
+        PopulateTrack(&(*m_tracks)[j], R[j]);
       }
     }
   }
@@ -246,10 +202,10 @@ class SearchTracksFunctor : public pqxx::transactor<>
 
 public:
   explicit SearchTracksFunctor(std::vector<Track> *tracks, const char *title, const char *artist, const char *album) :
-    m_tracks(tracks),
     m_title(title),
     m_artist(artist),
-    m_album(album)
+    m_album(album),
+    m_tracks(tracks)
   {
   }
 
@@ -265,50 +221,7 @@ public:
       m_tracks->resize(R.size());
       for (size_t j = 0; j < R.size(); j++)
       {
-        // XXX lookup by column name does not appear to work
-        for (size_t i = 0; i < R[j].size(); i++)
-        {
-          if (!strcmp(R[j][i].name(), "TrackId"))
-          {
-            R[j][i].to((*m_tracks)[j].TrackId);
-          }
-          else if (!strcmp(R[j][i].name(), "Filename"))
-          {
-            R[j][i].to((*m_tracks)[j].Filename);
-          }
-          else if (!strcmp(R[j][i].name(), "Title"))
-          {
-            R[j][i].to((*m_tracks)[j].Title);
-          }
-          else if (!strcmp(R[j][i].name(), "Artist"))
-          {
-            R[j][i].to((*m_tracks)[j].Artist);
-          }
-          else if (!strcmp(R[j][i].name(), "Album"))
-          {
-            R[j][i].to((*m_tracks)[j].Album);
-          }
-          else if (!strcmp(R[j][i].name(), "Genre"))
-          {
-            R[j][i].to((*m_tracks)[j].Genre);
-          }
-          else if (!strcmp(R[j][i].name(), "DiscNumber"))
-          {
-            R[j][i].to((*m_tracks)[j].DiscNumber);
-          }
-          else if (!strcmp(R[j][i].name(), "TrackNumber"))
-          {
-            R[j][i].to((*m_tracks)[j].TrackNumber);
-          }
-          else if (!strcmp(R[j][i].name(), "Length"))
-          {
-            R[j][i].to((*m_tracks)[j].Length);
-          }
-          else if (!strcmp(R[j][i].name(), "Uploader"))
-          {
-            R[j][i].to((*m_tracks)[j].Uploader);
-          }
-        }
+        PopulateTrack(&(*m_tracks)[j], R[j]);
       }
     }
   }
@@ -337,58 +250,38 @@ public:
       m_votes->resize(R.size());
       for (size_t j = 0; j < R.size(); j++)
       {
-        // XXX lookup by column name does not appear to work
-        for (size_t i = 0; i < R[j].size(); i++)
-        {
-          if (!strcmp(R[j][i].name(), "UserName"))
-          {
-            R[j][i].to((*m_votes)[j].UserName);
-          }
-          else if (!strcmp(R[j][i].name(), "Timestamp"))
-          {
-            R[j][i].to((*m_votes)[j].Timestamp);
-          }
-          else if (!strcmp(R[j][i].name(), "TrackId"))
-          {
-            R[j][i].to((*m_votes)[j].ReqTrack.TrackId);
-          }
-          else if (!strcmp(R[j][i].name(), "Filename"))
-          {
-            R[j][i].to((*m_votes)[j].ReqTrack.Filename);
-          }
-          else if (!strcmp(R[j][i].name(), "Title"))
-          {
-            R[j][i].to((*m_votes)[j].ReqTrack.Title);
-          }
-          else if (!strcmp(R[j][i].name(), "Artist"))
-          {
-            R[j][i].to((*m_votes)[j].ReqTrack.Artist);
-          }
-          else if (!strcmp(R[j][i].name(), "Album"))
-          {
-            R[j][i].to((*m_votes)[j].ReqTrack.Album);
-          }
-          else if (!strcmp(R[j][i].name(), "Genre"))
-          {
-            R[j][i].to((*m_votes)[j].ReqTrack.Genre);
-          }
-          else if (!strcmp(R[j][i].name(), "DiscNumber"))
-          {
-            R[j][i].to((*m_votes)[j].ReqTrack.DiscNumber);
-          }
-          else if (!strcmp(R[j][i].name(), "TrackNumber"))
-          {
-            R[j][i].to((*m_votes)[j].ReqTrack.TrackNumber);
-          }
-          else if (!strcmp(R[j][i].name(), "Length"))
-          {
-            R[j][i].to((*m_votes)[j].ReqTrack.Length);
-          }
-          else if (!strcmp(R[j][i].name(), "Uploader"))
-          {
-            R[j][i].to((*m_votes)[j].ReqTrack.Uploader);
-          }
-        }
+        PopulateVote(&(*m_votes)[j], R[j]);
+      }
+    }
+  }
+};
+
+// g++ won't let me make these function-local - not sure if I'm doing something wrong or not
+class GetVotesForUserFunctor : public pqxx::transactor<>
+{
+  const char *m_username;
+  std::vector<Vote> *m_votes;
+
+public:
+  explicit GetVotesForUserFunctor(std::vector<Vote> *votes, const char *username) :
+    m_username(username),
+    m_votes(votes)
+  {
+  }
+
+  void operator()(argument_type &T)
+  {
+    pqxx::result R = T.exec(std::string("SELECT * FROM \"Votes\" LEFT JOIN \"Tracks\" ON \"Votes\".\"TrackId\"=\"Tracks\".\"TrackId\" WHERE \"UserName\"='") + T.esc(m_username) + "'");
+    if (R.empty())
+    {
+      m_votes->resize(0);
+    }
+    else
+    {
+      m_votes->resize(R.size());
+      for (size_t j = 0; j < R.size(); j++)
+      {
+        PopulateVote(&(*m_votes)[j], R[j]);
       }
     }
   }
@@ -398,6 +291,7 @@ Database::Database() :
   m_conn("host=localhost user=neztu password=passw0rd dbname=neztu")
 {
   m_conn.prepare("search", "SELECT * FROM \"Tracks\" WHERE \"Title\" ~* $1 AND \"Artist\" ~* $2 AND \"Album\" ~* $3")("varchar", prepare::treat_string)("varchar", prepare::treat_string)("varchar", prepare::treat_string);
+  m_conn.prepare("swap", "UPDATE \"Votes\" SET \"Timestamp\"=$1 WHERE \"UserName\"=$2 AND \"TrackId\"=$3")("timestamp", prepare::treat_string)("varchar", prepare::treat_string)("integer", prepare::treat_direct);
 }
 
 Track Database::GetTrack(unsigned int TrackId)
@@ -433,6 +327,11 @@ void Database::GetVotes(std::vector<Vote> *out)
   m_conn.perform(GetVotesFunctor(out));
 }
 
+void Database::GetVotes(std::vector<Vote> *out, const std::string &username)
+{
+  m_conn.perform(GetVotesForUserFunctor(out, username.c_str()));
+}
+
 void Database::AddVote(std::string username, unsigned int trackid)
 {
   std::vector<char> trackId;
@@ -440,4 +339,9 @@ void Database::AddVote(std::string username, unsigned int trackid)
   snprintf(&trackId[0], 12, "%d", trackid);
 
   m_conn.perform(AddVoteFunctor(username.c_str(), &trackId[0]));
+}
+
+void Database::SwapVotes(const Vote &vote1, const Vote &vote2)
+{
+  m_conn.perform(SwapVotesFunctor(vote1, vote2));
 }

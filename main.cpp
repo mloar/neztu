@@ -1,6 +1,7 @@
 #include <fcgiapp.h>
 #include <stdlib.h>
 #include "FCgiIO.h"
+#include "Database.h"
 #include "Dispatcher.h"
 
 int main(int argc, char* argv[])
