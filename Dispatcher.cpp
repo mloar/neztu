@@ -18,17 +18,18 @@ class NeztuHeading : public cgicc::MStreamable
     virtual void render(std::ostream& out) const
     {
       // Send HTTP header
-      out << "Content-Type: text/html; charset=utf-8\r\n\r\n";
+      out << "Content-type: text/html; charset=utf-8\r\n\r\n";
 
       // Set up the HTML document
       out << HTMLDoctype() << endl;
-      out << html() << head(title("Neztu!")).add(cgicc::link(set("href", "resources/main.css").set("type", "text/css").set("rel", "stylesheet"))) << endl;
-      out << body() << endl;
+      out << html() << head() << title("Neztu!") << cgicc::link(set("href", "resources/main.css").set("type", "text/css").set("rel", "stylesheet")) << head() << endl;
+      out << body() << "<script type=\"text/javascript\" src=\"resources/Neztu.js\"></script>" << endl;
 
       out << "<div id=\"header\"><img src=\"resources/banner.jpg\" alt=\"Neztu!\">" << endl;
       out << "<table id=\"menu\">";
       out << "<tr><td><a href=\"./\">Home</a></td><td><a href=\"playlist\">Your Playlist</a></td><td><a href=\"search\">Search Tracks</a></td><td><a href=\"add\">Add Tracks</a></td></tr>";
       out << "</table></div>";
+      out << "<div id=\"main\">";
     }
 };
 
@@ -37,6 +38,9 @@ class NeztuFooter : public cgicc::MStreamable
   public:
     virtual void render(std::ostream& out) const
     {
+      out << "</div>";
+      out << "<div id=\"footer\"><div id=\"nowplaying\"><div id=\"nowplayingleft\">Now Playing:</div><div id=\"nowplayingright\"><span id=\"NowPlayingTitle\"></span><br><span id=\"NowPlayingArtist\"></span><br></div></div></div>";
+      out << "<script type=\"text/javascript\">updateNowPlaying();</script>";
       out << body() << html();
     }
 };
@@ -62,12 +66,20 @@ void index_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
 
   std::vector<Vote> votes;
   db.GetVotes(&votes);
-  io << "<table><caption>Queue</caption>" << endl << "<tr><th>Title</th><th>Voted By</th></tr>" << endl;
+  io << "<div id=\"queuedata\">";
+  io << "<table border=\"1\" style=\"width:100%\"><caption>Queue</caption>" << endl;
+  io << "<tr><th>Title</th><th>Artist</th><th>Album</th><th>Length</th><th>Requested By</th></tr>" << endl;
   for (std::vector<Vote>::iterator iter = votes.begin(); iter != votes.end(); iter++)
   {
-    io << "<tr><td>" << iter->ReqTrack.Title << "</td><td>" << iter->UserName << "</td></tr>" << endl;
+    io << "<tr><td>" << iter->ReqTrack.Title << "</td><td>" << iter->ReqTrack.Artist << "</td>";
+    io << "<td>" << iter->ReqTrack.Album << "</td>";
+    io << "<td>";
+    io << setw(2) << setfill('0') << iter->ReqTrack.Length / 3600 << ":";
+    io << setw(2) << setfill('0') << (iter->ReqTrack.Length % 3600) / 60 << ":";
+    io << setw(2) << setfill('0') << (iter->ReqTrack.Length % 60) << "</td>";
+    io << "<td>" << iter->UserName << "</td></tr>";
   }
-  io << "</table>" << endl;
+  io << "</table></div>" << endl;
 
   io << NeztuFooter();
 }
@@ -86,13 +98,27 @@ void playlist_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
       unsigned int trackId1, trackId2;
       trackIdStr1 >> trackId1;
       trackIdStr2 >> trackId2;
+      db.SwapVotes(cgi.getEnvironment().getRemoteUser(), trackId1, trackId2);
+    }
+  }
+
+  cgicc::form_iterator remove = cgi["remove"];
+  if (remove != cgi.getElements().end() && remove->getValue() == "yes")
+  {
+    cgicc::form_iterator track1 = cgi["track1"];
+    if (track1 != cgi.getElements().end())
+    {
+      std::stringstream str(track1->getValue());
+      unsigned int trackId;
+      str >> trackId;
+      db.RemoveVote(cgi.getEnvironment().getRemoteUser(), trackId);
     }
   }
 
   std::vector<Vote> votes;
   db.GetVotes(&votes, cgi.getEnvironment().getRemoteUser());
 
-  io << "<table border=\"1\"><caption>Your Playlist</caption>" << endl;
+  io << "<table border=\"1\" style=\"width:100%\"><caption>Your Playlist</caption>" << endl;
   io << "<tr><th></th><th></th><th>Title</th><th>Artist</th><th>Length</th></tr>" << endl;
   unsigned int lastTrackId = 0;
   for (std::vector<Vote>::iterator iter = votes.begin(); iter != votes.end(); iter++)
@@ -208,6 +234,7 @@ void resource_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database&)
   {
     m_contentTypes.insert(std::make_pair(".css", "text/css"));
     m_contentTypes.insert(std::make_pair(".jpg", "image/jpeg"));
+    m_contentTypes.insert(std::make_pair(".js", "text/javascript"));
   }
 
   std::string path = cgi.getEnvironment().getPathTranslated();
@@ -225,14 +252,25 @@ void resource_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database&)
   io << file.rdbuf();
 }
 
+void nowplaying_handler(FCgiIO &io, Cgicc &cgi, Database &db)
+{
+  io << "Content-type: text/plain; charset=utf-8\r\n\r\n";
+
+  Vote v = db.GetCurrent();
+  // XXX send real time
+  io << v.ReqTrack.Title << "\n" << v.ReqTrack.Artist << "\n" << "15000";
+}
+
 Dispatcher::Dispatcher()
 {
   m_paths.insert(std::make_pair("/vote", vote_handler));
   m_paths.insert(std::make_pair("/test", test_handler));
   m_paths.insert(std::make_pair("/playlist", playlist_handler));
   m_paths.insert(std::make_pair("/search", search_handler));
+  m_paths.insert(std::make_pair("/nowplaying", nowplaying_handler));
   m_paths.insert(std::make_pair("/resources/banner.jpg", resource_handler));
   m_paths.insert(std::make_pair("/resources/main.css", resource_handler));
+  m_paths.insert(std::make_pair("/resources/Neztu.js", resource_handler));
   m_paths.insert(std::make_pair("/", index_handler));
   m_paths.insert(std::make_pair("", index_handler));
 }

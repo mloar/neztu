@@ -116,22 +116,88 @@ public:
 };
 
 // g++ won't let me make these function-local - not sure if I'm doing something wrong or not
-class SwapVotesFunctor : public pqxx::transactor<>
+class RemoveVoteFunctor : public pqxx::transactor<>
 {
-  Vote m_vote1;
-  Vote m_vote2;
+  const char *m_username;
+  const char *m_trackId;
 
 public:
-  explicit SwapVotesFunctor(const Vote &vote1, const Vote &vote2) :
-    m_vote1(vote1),
-    m_vote2(vote2)
+  explicit RemoveVoteFunctor(const char *username, const char *trackId) :
+    m_username(username),
+    m_trackId(trackId)
   {
   }
 
   void operator()(argument_type &T)
   {
-    T.prepared("swap")(m_vote2.Timestamp)(m_vote1.UserName)(m_vote1.ReqTrack.TrackId).exec();
-    T.prepared("swap")(m_vote1.Timestamp)(m_vote2.UserName)(m_vote2.ReqTrack.TrackId).exec();
+    T.exec(std::string("DELETE FROM \"Votes\" WHERE \"UserName\"='") + T.esc(m_username) + "' AND \"TrackId\"=" + m_trackId);
+  }
+};
+
+// g++ won't let me make these function-local - not sure if I'm doing something wrong or not
+class SwapVotesFunctor : public pqxx::transactor<>
+{
+  std::string m_username;
+  std::string m_trackId1;
+  std::string m_trackId2;
+
+public:
+  explicit SwapVotesFunctor(const std::string &username, unsigned int trackId1, unsigned int trackId2) :
+    m_username(username)
+  {
+    std::stringstream trackId;
+    trackId << trackId1;
+    m_trackId1 = trackId.str();
+    trackId.str(std::string());
+    trackId << trackId2;
+    m_trackId2 = trackId.str();
+  }
+
+  void operator()(argument_type &T)
+  {
+    std::string timestamp1, timestamp2;
+    pqxx::result R = T.exec(std::string("SELECT \"Timestamp\" FROM \"Votes\" WHERE \"UserName\"='") + T.esc(m_username) + "' AND \"TrackId\"=" + m_trackId1);
+    if (R.empty())
+    {
+      throw std::runtime_error("could not get timestamp");
+    }
+    R[0][0].to(timestamp1);
+
+    R = T.exec(std::string("SELECT \"Timestamp\" FROM \"Votes\" WHERE \"UserName\"='") + T.esc(m_username) + "' AND \"TrackId\"=" + m_trackId2);
+    if (R.empty())
+    {
+      throw std::runtime_error("could not get timestamp");
+    }
+    R[0][0].to(timestamp2);
+
+    T.prepared("swap")(timestamp2)(m_username)(m_trackId1).exec();
+    T.prepared("swap")(timestamp1)(m_username)(m_trackId2).exec();
+  }
+};
+
+// g++ won't let me make these function-local - not sure if I'm doing something wrong or not
+class GetCurrentFunctor : public pqxx::transactor<>
+{
+  Vote *m_vote;
+
+public:
+  explicit GetCurrentFunctor(Vote *vote) :
+    m_vote(vote)
+  {
+  }
+
+  void operator()(argument_type &T)
+  {
+    pqxx::result R = T.exec(std::string("SELECT * FROM \"History\" LEFT JOIN \"Tracks\" ON \"History\".\"TrackId\"=\"Tracks\".\"TrackId\" ORDER BY \"Timestamp\" DESC LIMIT 1"));
+    if (R.empty())
+    {
+      // XXX: throw exception?
+      m_vote->ReqTrack.TrackId = 0;
+    }
+    else
+    {
+      PopulateVote(m_vote, R[0]);
+    }
   }
 };
 
@@ -240,7 +306,7 @@ public:
 
   void operator()(argument_type &T)
   {
-    pqxx::result R = T.exec("SELECT * FROM \"Votes\" LEFT JOIN \"Tracks\" ON \"Votes\".\"TrackId\"=\"Tracks\".\"TrackId\"");
+    pqxx::result R = T.exec("SELECT * FROM \"Votes\" LEFT JOIN \"Tracks\" ON \"Votes\".\"TrackId\"=\"Tracks\".\"TrackId\" ORDER BY \"Timestamp\"");
     if (R.empty())
     {
       m_votes->resize(0);
@@ -271,7 +337,7 @@ public:
 
   void operator()(argument_type &T)
   {
-    pqxx::result R = T.exec(std::string("SELECT * FROM \"Votes\" LEFT JOIN \"Tracks\" ON \"Votes\".\"TrackId\"=\"Tracks\".\"TrackId\" WHERE \"UserName\"='") + T.esc(m_username) + "'");
+    pqxx::result R = T.exec(std::string("SELECT * FROM \"Votes\" LEFT JOIN \"Tracks\" ON \"Votes\".\"TrackId\"=\"Tracks\".\"TrackId\" WHERE \"UserName\"='") + T.esc(m_username) + "' ORDER BY \"Timestamp\"");
     if (R.empty())
     {
       m_votes->resize(0);
@@ -341,7 +407,23 @@ void Database::AddVote(std::string username, unsigned int trackid)
   m_conn.perform(AddVoteFunctor(username.c_str(), &trackId[0]));
 }
 
-void Database::SwapVotes(const Vote &vote1, const Vote &vote2)
+void Database::RemoveVote(std::string username, unsigned int trackid)
 {
-  m_conn.perform(SwapVotesFunctor(vote1, vote2));
+  std::vector<char> trackId;
+  trackId.resize(12);
+  snprintf(&trackId[0], 12, "%d", trackid);
+
+  m_conn.perform(RemoveVoteFunctor(username.c_str(), &trackId[0]));
+}
+
+void Database::SwapVotes(const std::string &username, unsigned int trackId1, unsigned int trackId2)
+{
+  m_conn.perform(SwapVotesFunctor(username, trackId1, trackId2));
+}
+
+Vote Database::GetCurrent()
+{
+  Vote v;
+  m_conn.perform(GetCurrentFunctor(&v));
+  return v;
 }

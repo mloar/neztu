@@ -43,7 +43,7 @@ public:
   void GetVotes(std::vector<Vote> *out, const std::string &username);
   void AddVote(const std::string username, unsigned int trackId);
   void RemoveVote(const std::string username, unsigned int trackId);
-  void SwapVotes(const Vote &vote1, const Vote &vote2);
+  void SwapVotes(const std::string &username, unsigned int trackId1, unsigned int trackId2);
 
   void GetHistory(std::vector<Vote> *out);
   void AddHistory(const std::string &username, unsigned int trackId);
