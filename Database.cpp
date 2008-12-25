@@ -1,3 +1,13 @@
+//+----------------------------------------------------------------------------
+//
+//  Copyright (c) 2008 Matthew Loar.
+//  See COPYING for license terms.
+//
+//  Abstract:
+//      Implementation of the Database class.
+//
+//-----------------------------------------------------------------------------
+
 #include <string.h>
 #include "Database.h"
 

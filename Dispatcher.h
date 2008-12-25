@@ -1,3 +1,13 @@
+//+----------------------------------------------------------------------------
+//
+//  Copyright (c) 2008 Matthew Loar.
+//  See COPYING for license terms.
+//
+//  Abstract:
+//      Defines the Dispatcher interface.
+//
+//-----------------------------------------------------------------------------
+
 #ifndef NEZTU_DISPATCHER_H
 #define NEZTU_DISPATCHER_H
 class Dispatcher

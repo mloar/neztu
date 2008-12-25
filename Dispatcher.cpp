@@ -1,3 +1,13 @@
+//+----------------------------------------------------------------------------
+//
+//  Copyright (c) 2008 Matthew Loar.
+//  See COPYING for license terms.
+//
+//  Abstract:
+//      Implements the pages of the FastCGI application.
+//
+//-----------------------------------------------------------------------------
+
 #include <map>
 #include <memory>
 #include <iomanip>

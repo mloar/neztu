@@ -1,3 +1,13 @@
+//+----------------------------------------------------------------------------
+//
+//  Copyright (c) 2008 Matthew Loar.
+//  See COPYING for license terms.
+//
+//  Abstract:
+//      Defines the data model and Database class.
+//
+//-----------------------------------------------------------------------------
+
 #ifndef NEZTU_DATABASE_H
 #define NEZTU_DATABASE_H
 #include <string>
