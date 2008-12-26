@@ -10,6 +10,8 @@
 
 #ifndef NEZTU_DISPATCHER_H
 #define NEZTU_DISPATCHER_H
+#include "Database.h"
+
 class Dispatcher
 {
 public:
@@ -23,4 +25,5 @@ private:
   PathMap m_paths;
   Database m_db;
 };
+
 #endif

@@ -8,13 +8,14 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef NEZTU_TAGREADER_H
-#define NEZTU_TAGREADER_H
+#ifndef NEZTU_SCHEDULER_H
+#define NEZTU_SCHEDULER_H
 
-class TagReader
+#include "Database.h"
+
+struct Scheduler
 {
-  public:
-    static Track ReadFileTags(const std::string &file);
+    bool operator()(const Vote&, const Vote&);
 };
 
 #endif

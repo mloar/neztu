@@ -143,6 +143,25 @@ public:
 };
 
 // g++ won't let me make these function-local - not sure if I'm doing something wrong or not
+class AddHistoryFunctor : public pqxx::transactor<>
+{
+  const char *m_username;
+  const char *m_trackId;
+
+public:
+  explicit AddHistoryFunctor(const char *username, const char *trackId) :
+    m_username(username),
+    m_trackId(trackId)
+  {
+  }
+
+  void operator()(argument_type &T)
+  {
+    T.exec(std::string("INSERT INTO \"History\" VALUES('") + T.esc(m_username) + "', " + m_trackId + ")");
+  }
+};
+
+// g++ won't let me make these function-local - not sure if I'm doing something wrong or not
 class RemoveVoteFunctor : public pqxx::transactor<>
 {
   const char *m_username;
@@ -434,7 +453,7 @@ unsigned int Database::AddTrack(const Track &track)
   return 0;
 }
 
-void Database::AddVote(std::string username, unsigned int trackid)
+void Database::AddVote(const std::string &username, unsigned int trackid)
 {
   std::vector<char> trackId;
   trackId.resize(12);
@@ -443,7 +462,16 @@ void Database::AddVote(std::string username, unsigned int trackid)
   m_conn.perform(AddVoteFunctor(username.c_str(), &trackId[0]));
 }
 
-void Database::RemoveVote(std::string username, unsigned int trackid)
+void Database::AddHistory(const std::string &username, unsigned int trackid)
+{
+  std::vector<char> trackId;
+  trackId.resize(12);
+  snprintf(&trackId[0], 12, "%d", trackid);
+
+  m_conn.perform(AddHistoryFunctor(username.c_str(), &trackId[0]));
+}
+
+void Database::RemoveVote(const std::string &username, unsigned int trackid)
 {
   std::vector<char> trackId;
   trackId.resize(12);

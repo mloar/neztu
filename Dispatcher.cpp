@@ -8,6 +8,7 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <list>
 #include <map>
 #include <memory>
 #include <iomanip>
@@ -18,6 +19,7 @@
 #include "FCgiIO.h"
 #include "Database.h"
 #include "Dispatcher.h"
+#include "Scheduler.h"
 
 using namespace cgicc;
 using namespace std;
@@ -76,10 +78,12 @@ void index_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
 
   std::vector<Vote> votes;
   db.GetVotes(&votes);
+  std::list<Vote> voteList(votes.begin(), votes.end());
+  voteList.sort(Scheduler());
   io << "<div id=\"queuedata\">";
   io << "<table border=\"1\" style=\"width:100%\"><caption>Queue</caption>" << endl;
   io << "<tr><th>Title</th><th>Artist</th><th>Album</th><th>Length</th><th>Requested By</th></tr>" << endl;
-  for (std::vector<Vote>::iterator iter = votes.begin(); iter != votes.end(); iter++)
+  for (std::list<Vote>::iterator iter = voteList.begin(); iter != voteList.end(); iter++)
   {
     io << "<tr><td>" << iter->ReqTrack.Title << "</td><td>" << iter->ReqTrack.Artist << "</td>";
     io << "<td>" << iter->ReqTrack.Album << "</td>";

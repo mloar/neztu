@@ -26,24 +26,11 @@ SET default_with_oids = false;
 CREATE TABLE "History" (
     "UserName" character varying(255) NOT NULL,
     "TrackId" integer NOT NULL,
-    "Timestamp" timestamp without time zone NOT NULL
+    "Timestamp" timestamp without time zone NOT NULL DEFAULT now()
 );
 
 
 ALTER TABLE public."History" OWNER TO "neztu";
-
---
--- Name: Pending; Type: TABLE; Schema: public; Owner: neztu; Tablespace: 
---
-
-CREATE TABLE "Pending" (
-    "UserName" character varying(255) NOT NULL,
-    "TrackId" integer NOT NULL,
-    "Timestamp" timestamp without time zone NOT NULL
-);
-
-
-ALTER TABLE public."Pending" OWNER TO "neztu";
 
 --
 -- Name: ProfileData; Type: TABLE; Schema: public; Owner: neztu; Tablespace: 
@@ -178,7 +165,7 @@ ALTER TABLE public."UsersInRoles" OWNER TO "neztu";
 CREATE TABLE "Votes" (
     "UserName" character varying(255) NOT NULL,
     "TrackId" integer  NOT NULL,
-    "Timestamp" timestamp without time zone
+    "Timestamp" timestamp without time zone NOT NULL DEFAULT now()
 );
 
 
@@ -190,14 +177,6 @@ ALTER TABLE public."Votes" OWNER TO "neztu";
 
 ALTER TABLE ONLY "History"
     ADD CONSTRAINT "History_pkey" PRIMARY KEY ("Timestamp");
-
-
---
--- Name: Pending_pkey; Type: CONSTRAINT; Schema: public; Owner: neztu; Tablespace: 
---
-
-ALTER TABLE ONLY "Pending"
-    ADD CONSTRAINT "Pending_pkey" PRIMARY KEY ("Timestamp");
 
 
 --
@@ -387,15 +366,6 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 REVOKE ALL ON TABLE "History" FROM PUBLIC;
 REVOKE ALL ON TABLE "History" FROM "neztu";
 GRANT ALL ON TABLE "History" TO "neztu";
-
-
---
--- Name: Pending; Type: ACL; Schema: public; Owner: neztu
---
-
-REVOKE ALL ON TABLE "Pending" FROM PUBLIC;
-REVOKE ALL ON TABLE "Pending" FROM "neztu";
-GRANT ALL ON TABLE "Pending" TO "neztu";
 
 
 --
