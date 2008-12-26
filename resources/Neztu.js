@@ -31,12 +31,22 @@ function updateNowPlaying() {
     x.setRequestHeader("Accept-Encoding", "gzip, deflate");
     x.onreadystatechange = function() {
       if (x.readyState != 4) {
+        // Failed - wait 10 seconds and try again
+        setTimeout(updateNowPlaying, 10000);
         return;
       }
-      var title = x.responseText.substr(0, x.responseText.indexOf("\n"));
-      var artist = x.responseText.substr(title.length + 1, x.responseText.substr(title.length + 1).indexOf("\n"));
-      var timeout = x.responseText.substr(title.length + artist.length + 2);
+      var queue = x.responseText.substr(0, x.responseText.indexOf("</table>\n"));
+      var title = x.responseText.substr(queue.length + 9, x.responseText.substr(queue.length + 9).indexOf("\n"));
+      var artist = x.responseText.substr(
+          queue.length + title.length + 10,
+          x.responseText.substr(queue.length + title.length + 10).indexOf("\n")
+          );
+      var timeout = x.responseText.substr(queue.length + title.length + artist.length + 11);
 
+      if (document.getElementById("queuedata"))
+      {
+        document.getElementById("queuedata").innerHTML = queue;
+      }
       document.getElementById("NowPlayingTitle").innerHTML = title;
       document.getElementById("NowPlayingArtist").innerHTML = artist;
       setTimeout(updateNowPlaying, timeout);

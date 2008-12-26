@@ -57,6 +57,38 @@ class NeztuFooter : public cgicc::MStreamable
     }
 };
 
+class Queue : public cgicc::MStreamable
+{
+  Database &m_db;
+
+  public:
+    Queue(Database &db) :
+      m_db(db)
+    {
+    }
+
+    virtual void render(std::ostream& out) const
+    {
+      std::vector<Vote> votes;
+      m_db.GetVotes(&votes);
+      std::list<Vote> voteList(votes.begin(), votes.end());
+      voteList.sort(Scheduler());
+      out << "<table border=\"1\" style=\"width:100%\"><caption>Queue</caption>" << endl;
+      out << "<tr><th>Title</th><th>Artist</th><th>Album</th><th>Length</th><th>Requested By</th></tr>" << endl;
+      for (std::list<Vote>::iterator iter = voteList.begin(); iter != voteList.end(); iter++)
+      {
+        out << "<tr><td>" << iter->ReqTrack.Title << "</td><td>" << iter->ReqTrack.Artist << "</td>";
+        out << "<td>" << iter->ReqTrack.Album << "</td>";
+        out << "<td>";
+        out << setw(2) << setfill('0') << iter->ReqTrack.Length / 3600 << ":";
+        out << setw(2) << setfill('0') << (iter->ReqTrack.Length % 3600) / 60 << ":";
+        out << setw(2) << setfill('0') << (iter->ReqTrack.Length % 60) << "</td>";
+        out << "<td>" << iter->UserName << "</td></tr>";
+      }
+      out << "</table>" << endl;
+    }
+};
+
 void vote_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
 {
   cgicc::form_iterator iter = cgi["trackId"];
@@ -76,24 +108,7 @@ void index_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
 {
   io << NeztuHeading() << endl;
 
-  std::vector<Vote> votes;
-  db.GetVotes(&votes);
-  std::list<Vote> voteList(votes.begin(), votes.end());
-  voteList.sort(Scheduler());
-  io << "<div id=\"queuedata\">";
-  io << "<table border=\"1\" style=\"width:100%\"><caption>Queue</caption>" << endl;
-  io << "<tr><th>Title</th><th>Artist</th><th>Album</th><th>Length</th><th>Requested By</th></tr>" << endl;
-  for (std::list<Vote>::iterator iter = voteList.begin(); iter != voteList.end(); iter++)
-  {
-    io << "<tr><td>" << iter->ReqTrack.Title << "</td><td>" << iter->ReqTrack.Artist << "</td>";
-    io << "<td>" << iter->ReqTrack.Album << "</td>";
-    io << "<td>";
-    io << setw(2) << setfill('0') << iter->ReqTrack.Length / 3600 << ":";
-    io << setw(2) << setfill('0') << (iter->ReqTrack.Length % 3600) / 60 << ":";
-    io << setw(2) << setfill('0') << (iter->ReqTrack.Length % 60) << "</td>";
-    io << "<td>" << iter->UserName << "</td></tr>";
-  }
-  io << "</table></div>" << endl;
+  io << "<div id=\"queuedata\">" << Queue(db) << "</div>";
 
   io << NeztuFooter();
 }
@@ -271,8 +286,27 @@ void nowplaying_handler(FCgiIO &io, Cgicc &cgi, Database &db)
   io << "Content-type: text/plain; charset=utf-8\r\n\r\n";
 
   Vote v = db.GetCurrent();
-  // XXX send real time
-  io << v.ReqTrack.Title << "\n" << v.ReqTrack.Artist << "\n" << "15000";
+  tm tim;
+  std::string timeout = "10000"; // arbitrary default
+  if (strptime(v.Timestamp.c_str(), "%Y-%m-%d %H:%M:%S", &tim))
+  {
+    int diff = static_cast<int>(difftime(mktime(&tim), time(NULL))) + v.ReqTrack.Length;
+    if (diff <= 0)
+    {
+      diff = 10000;
+    }
+    else
+    {
+      diff *= 1000;
+    }
+
+    std::stringstream strstream;
+    strstream << diff;
+    timeout = strstream.str();
+  }
+
+  io << Queue(db);
+  io << v.ReqTrack.Title << "\n" << v.ReqTrack.Artist << "\n" << timeout;
 }
 
 Dispatcher::Dispatcher()
