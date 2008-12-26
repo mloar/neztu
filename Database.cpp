@@ -107,6 +107,23 @@ public:
 };
 
 // g++ won't let me make these function-local - not sure if I'm doing something wrong or not
+class AddTrackFunctor : public pqxx::transactor<>
+{
+  Track m_track;
+
+public:
+  explicit AddTrackFunctor(const Track &track) :
+    m_track(track)
+  {
+  }
+
+  void operator()(argument_type &T)
+  {
+    T.prepared("addtrack")(m_track.Filename)(m_track.Title)(m_track.Artist)(m_track.Album)(m_track.Genre)(m_track.DiscNumber)(m_track.TrackNumber)(m_track.Length)(m_track.Uploader).exec();
+  }
+};
+
+// g++ won't let me make these function-local - not sure if I'm doing something wrong or not
 class AddVoteFunctor : public pqxx::transactor<>
 {
   const char *m_username;
@@ -368,6 +385,7 @@ Database::Database() :
 {
   m_conn.prepare("search", "SELECT * FROM \"Tracks\" WHERE \"Title\" ~* $1 AND \"Artist\" ~* $2 AND \"Album\" ~* $3")("varchar", prepare::treat_string)("varchar", prepare::treat_string)("varchar", prepare::treat_string);
   m_conn.prepare("swap", "UPDATE \"Votes\" SET \"Timestamp\"=$1 WHERE \"UserName\"=$2 AND \"TrackId\"=$3")("timestamp", prepare::treat_string)("varchar", prepare::treat_string)("integer", prepare::treat_direct);
+  m_conn.prepare("addtrack", "INSERT INTO \"Tracks\" (\"Filename\", \"Title\", \"Artist\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\") VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)")("varchar", prepare::treat_string)("varchar", prepare::treat_string)("varchar", prepare::treat_string)("varchar", prepare::treat_string)("varchar", prepare::treat_string)("integer", prepare::treat_direct)("integer", prepare::treat_direct)("integer", prepare::treat_direct)("varchar", prepare::treat_string);
 }
 
 Track Database::GetTrack(unsigned int TrackId)
@@ -406,6 +424,14 @@ void Database::GetVotes(std::vector<Vote> *out)
 void Database::GetVotes(std::vector<Vote> *out, const std::string &username)
 {
   m_conn.perform(GetVotesForUserFunctor(out, username.c_str()));
+}
+
+unsigned int Database::AddTrack(const Track &track)
+{
+  // XXX this is supposed to return the assigned track id
+  m_conn.perform(AddTrackFunctor(track));
+
+  return 0;
 }
 
 void Database::AddVote(std::string username, unsigned int trackid)

@@ -46,7 +46,7 @@ public:
   Track GetTrack(const std::string &filename);
   void GetTracks(std::vector<Track> *out);
   void GetTracks(std::vector<Track> *out, const std::string &title, const std::string &artist, const std::string &album);
-  unsigned int AddTrack(Track &newTrack);
+  unsigned int AddTrack(const Track &newTrack);
   void RemoveTrack(unsigned int trackId);
 
   void GetVotes(std::vector<Vote> *out);
