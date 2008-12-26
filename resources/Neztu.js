@@ -2,8 +2,7 @@ function GetXMLHttpRequest() {
   if (window.XMLHttpRequest) {
     return new XMLHttpRequest();
   } else {
-    if (window.XMLHttpRequestProgID) {
-      return new ActiveXObject(window.XMLHttpRequestProgID);
+    if (window.XMLHttpRequestProgID) { return new ActiveXObject(window.XMLHttpRequestProgID);
     } else {
       var progIDs = ["Msxml2.XMLHTTP.6.0", "Msxml2.XMLHTTP.5.0", "Msxml2.XMLHTTP.4.0", "MSXML2.XMLHTTP.3.0", "MSXML2.XMLHTTP", "Microsoft.XMLHTTP"];
       for (var i = 0; i < progIDs.length; ++i) {
@@ -31,9 +30,12 @@ function updateNowPlaying() {
     x.setRequestHeader("Accept-Encoding", "gzip, deflate");
     x.onreadystatechange = function() {
       if (x.readyState != 4) {
-        // Failed - wait 10 seconds and try again
-        setTimeout(updateNowPlaying, 10000);
         return;
+      }
+
+      if (x.responseText.length == 0) {
+        // Failed - try again 10 minutes later
+        setTimeout(updateNowPlaying, 10000);
       }
       var queue = x.responseText.substr(0, x.responseText.indexOf("</table>\n"));
       var title = x.responseText.substr(queue.length + 9, x.responseText.substr(queue.length + 9).indexOf("\n"));
@@ -51,6 +53,6 @@ function updateNowPlaying() {
       document.getElementById("NowPlayingArtist").innerHTML = artist;
       setTimeout(updateNowPlaying, timeout);
     }
-    x.send("");
+    x.send(null);
   }
 }
