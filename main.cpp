@@ -13,6 +13,7 @@
 #include <cgicc/Cgicc.h>
 
 #include "FCgiIO.h"
+#include "Configuration.h"
 #include "Database.h"
 #include "Dispatcher.h"
 
@@ -31,10 +32,13 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  // Load the configuration.
+  Configuration config("/etc/neztu.conf");
+
   // We initialize the dispatcher outside of the loop so that we do
   // initialization tasks once and maintain a database connection between
   // requests.
-  Dispatcher dispatcher;
+  Dispatcher dispatcher(config);
 
   FCGX_Request req;
   FCGX_InitRequest(&req, 0, 0);

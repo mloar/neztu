@@ -10,9 +10,12 @@
 
 #ifndef NEZTU_DATABASE_H
 #define NEZTU_DATABASE_H
+
 #include <string>
 #include <vector>
 #include <pqxx/pqxx>
+
+#include "Configuration.h"
 
 class Track
 {
@@ -40,12 +43,14 @@ public:
 class Database
 {
 public:
-  Database();
+  Database(const Configuration &config);
 
   Track GetTrack(unsigned int TrackId);
   Track GetTrack(const std::string &filename);
   void GetTracks(std::vector<Track> *out);
   void GetTracks(std::vector<Track> *out, const std::string &title, const std::string &artist, const std::string &album);
+  void GetRandomTracks(std::vector<Track> *out, unsigned int count);
+
   unsigned int AddTrack(const Track &newTrack);
   void RemoveTrack(unsigned int trackId);
 

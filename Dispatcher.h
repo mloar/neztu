@@ -10,12 +10,14 @@
 
 #ifndef NEZTU_DISPATCHER_H
 #define NEZTU_DISPATCHER_H
+
+#include "Configuration.h"
 #include "Database.h"
 
 class Dispatcher
 {
 public:
-  Dispatcher();
+  Dispatcher(const Configuration &config);
   void Dispatch(cgicc::FCgiIO&);
 
   typedef void(*path_handler)(cgicc::FCgiIO&, cgicc::Cgicc&, Database&);

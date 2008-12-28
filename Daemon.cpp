@@ -9,12 +9,23 @@
 //-----------------------------------------------------------------------------
 
 #include <list>
+#include <iostream>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "Database.h"
 #include "Scheduler.h"
 
 int main(int argc, char* argv[])
 {
-  Database db;
+  Configuration config("/etc/neztu.conf");
+  Database db(config);
+
+  if (daemon(0, 0))
+  {
+    std::cerr << "Could not fork" << std::endl;
+    return 1;
+  }
 
   for (;;)
   {
@@ -27,7 +38,14 @@ int main(int argc, char* argv[])
       printf("Playing %s\n", voteList.begin()->ReqTrack.Title.c_str());
       db.RemoveVote(votes[0].UserName, voteList.begin()->ReqTrack.TrackId);
       db.AddHistory(votes[0].UserName, voteList.begin()->ReqTrack.TrackId);
-      sleep(voteList.begin()->ReqTrack.Length);
+
+      std::stringstream str;
+      str << "mpg123 \"" << voteList.begin()->ReqTrack.Filename << "\"";
+      printf("%s\n", str.str().c_str());
+      if (system(str.str().c_str()))
+      {
+        // XXX Report this error to the database
+      }
     }
     else
     {

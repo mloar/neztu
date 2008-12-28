@@ -44,7 +44,8 @@ int main(int argc, char* argv[])
 
   try
   {
-    Database db;
+    Configuration config("/etc/neztu.conf");
+    Database db(config);
 
     for (int i = 1; i < argc; i++)
     {
@@ -67,9 +68,16 @@ int main(int argc, char* argv[])
           else
           {
             t = TagReader::ReadFileTags(path);
-            t.Uploader = "neztu";
-            db.AddTrack(t);
-            printf("Added %s\n", path);
+            if (t.Title.empty())
+            {
+              fprintf(stderr, "%s has no title, not adding\n", path);
+            }
+            else
+            {
+              t.Uploader = "neztu";
+              db.AddTrack(t);
+              printf("Added %s\n", path);
+            }
           }
         }
         catch (std::exception &e)

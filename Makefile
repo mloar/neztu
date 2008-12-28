@@ -2,13 +2,13 @@
 
 all: neztu.fcgi neztud tagreader
 
-neztu.fcgi: main.o Database.o FCgiIO.o Dispatcher.o Scheduler.o
+neztu.fcgi: main.o Configuration.o Database.o FCgiIO.o Dispatcher.o Scheduler.o
 	g++ -Wall -Werror -pedantic -g -o $@ $^ -lpqxx -lfcgi++ -lcgicc
 
-neztud: Daemon.o Database.o Scheduler.o
+neztud: Daemon.o Configuration.o Database.o Scheduler.o
 	g++ -Wall -Werror -pedantic -g -o $@ $^ -lpqxx
 
-tagreader: TagReader.o Database.o
+tagreader: TagReader.o Configuration.o Database.o
 	g++ -Wall -Werror -pedantic -g -o $@ $^ -lpqxx -ltag
 
 .cpp.o:

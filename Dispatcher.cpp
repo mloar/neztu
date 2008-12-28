@@ -17,6 +17,7 @@
 #include "cgicc/HTMLClasses.h"
 
 #include "FCgiIO.h"
+#include "Configuration.h"
 #include "Database.h"
 #include "Dispatcher.h"
 #include "Scheduler.h"
@@ -89,6 +90,36 @@ class Queue : public cgicc::MStreamable
     }
 };
 
+class RandomTracks : public cgicc::MStreamable
+{
+  Database &m_db;
+
+  public:
+    RandomTracks(Database &db) :
+      m_db(db)
+    {
+    }
+
+    virtual void render(std::ostream& out) const
+    {
+      std::vector<Track> tracks;
+      m_db.GetRandomTracks(&tracks, 10);
+      out << "<table border=\"1\" style=\"width:100%\"><caption>Random Tracks</caption>" << endl;
+      out << "<tr><th>Title</th><th>Artist</th><th>Album</th><th>Length</th></tr>" << endl;
+      for (std::vector<Track>::iterator iter = tracks.begin(); iter != tracks.end(); iter++)
+      {
+        out << "<tr><td>" << iter->Title << "</td><td>" << iter->Artist << "</td>";
+        out << "<td>" << iter->Album << "</td>";
+        out << "<td>";
+        out << setw(2) << setfill('0') << iter->Length / 3600 << ":";
+        out << setw(2) << setfill('0') << (iter->Length % 3600) / 60 << ":";
+        out << setw(2) << setfill('0') << (iter->Length % 60) << "</td>";
+        out << "</td></tr>";
+      }
+      out << "</table>" << endl;
+    }
+};
+
 void vote_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
 {
   cgicc::form_iterator iter = cgi["trackId"];
@@ -109,6 +140,7 @@ void index_handler(cgicc::FCgiIO &io, cgicc::Cgicc &cgi, Database &db)
   io << NeztuHeading() << endl;
 
   io << "<div id=\"queuedata\">" << Queue(db) << "</div>";
+  io << "<div id=\"randomtracks\">" << RandomTracks(db) << "</div>";
 
   io << NeztuFooter();
 }
@@ -287,29 +319,24 @@ void nowplaying_handler(FCgiIO &io, Cgicc &cgi, Database &db)
 
   Vote v = db.GetCurrent();
   tm tim;
-  std::string timeout = "10000"; // arbitrary default
+  std::string timeout = "3000"; // arbitrary default
   if (strptime(v.Timestamp.c_str(), "%Y-%m-%d %H:%M:%S", &tim))
   {
-    int diff = static_cast<int>(difftime(mktime(&tim), time(NULL))) + v.ReqTrack.Length;
-    if (diff <= 0)
+    int diff = static_cast<int>(difftime(mktime(&tim), time(NULL))) + v.ReqTrack.Length + 1;
+    if (diff > 0)
     {
-      diff = 10000;
+      std::stringstream strstream;
+      strstream << diff * 1000;
+      timeout = strstream.str();
     }
-    else
-    {
-      diff *= 1000;
-    }
-
-    std::stringstream strstream;
-    strstream << diff;
-    timeout = strstream.str();
   }
 
   io << Queue(db);
   io << v.ReqTrack.Title << "\n" << v.ReqTrack.Artist << "\n" << timeout;
 }
 
-Dispatcher::Dispatcher()
+Dispatcher::Dispatcher(const Configuration &config) :
+  m_db(config)
 {
   m_paths.insert(std::make_pair("/vote", vote_handler));
   m_paths.insert(std::make_pair("/test", test_handler));
