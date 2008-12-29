@@ -16,6 +16,8 @@
 #include "Database.h"
 #include "Scheduler.h"
 
+using namespace neztu;
+
 int main(int argc, char* argv[])
 {
   Configuration config("/etc/neztu.conf");

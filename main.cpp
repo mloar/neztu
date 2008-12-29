@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
   }
 
   // Load the configuration.
-  Configuration config("/etc/neztu.conf");
+  neztu::Configuration config("/etc/neztu.conf");
 
   // We initialize the dispatcher outside of the loop so that we do
   // initialization tasks once and maintain a database connection between

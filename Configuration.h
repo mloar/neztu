@@ -14,16 +14,19 @@
 #include <map>
 #include <string>
 
-class Configuration
+namespace neztu
 {
-  typedef std::map<std::string, std::string> EntryMap;
-  EntryMap m_config;
+  class Configuration
+  {
+    typedef std::map<std::string, std::string> EntryMap;
+    EntryMap m_config;
 
-  public:
+    public:
     Configuration(const std::string &file);
 
     const std::string& GetDatabaseConnectionString() const;
     const std::string& GetSchedulingMethod() const;
-};
+  };
+}
 
 #endif

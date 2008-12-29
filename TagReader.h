@@ -11,10 +11,13 @@
 #ifndef NEZTU_TAGREADER_H
 #define NEZTU_TAGREADER_H
 
-class TagReader
+namespace neztu
 {
-  public:
-    static Track ReadFileTags(const std::string &file);
-};
+  class TagReader
+  {
+    public:
+      static Track ReadFileTags(const std::string &file);
+  };
+}
 
 #endif

@@ -15,27 +15,32 @@
 #include "Database.h"
 #include "TagReader.h"
 
-Track TagReader::ReadFileTags(const std::string &file)
+namespace neztu
 {
-  using namespace TagLib;
+  Track TagReader::ReadFileTags(const std::string &file)
+  {
+    using namespace TagLib;
 
-  Track t;
-  FileRef f(file.c_str());
-  t.Filename = file;
-  t.Title = f.tag()->title().to8Bit(true);
-  t.Artist = f.tag()->artist().to8Bit(true);
-  t.Album = f.tag()->album().to8Bit(true);
-  t.Genre = f.tag()->genre().to8Bit(true);
-  t.DiscNumber = 0;
-  t.TrackNumber = f.tag()->track();
-  t.Length = f.audioProperties()->length();
+    Track t;
+    FileRef f(file.c_str());
+    t.Filename = file;
+    t.Title = f.tag()->title().to8Bit(true);
+    t.Artist = f.tag()->artist().to8Bit(true);
+    t.Album = f.tag()->album().to8Bit(true);
+    t.Genre = f.tag()->genre().to8Bit(true);
+    t.DiscNumber = 0;
+    t.TrackNumber = f.tag()->track();
+    t.Length = f.audioProperties()->length();
 
-  return t;
+    return t;
+  }
 }
 
 // For the TagReader standalone app.
 int main(int argc, char* argv[])
 {
+  using namespace neztu;
+
   if (argc < 2)
   {
     fprintf(stderr, "Usage: %s file...\n", argv[0]);
