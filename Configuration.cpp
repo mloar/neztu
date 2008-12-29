@@ -21,6 +21,7 @@ Configuration::Configuration(const std::string &path)
   // can use the map as a reference for valid settings when reading the config
   // file.
   m_config.insert(std::make_pair("dbconn", ""));
+  m_config.insert(std::make_pair("scheduler", ""));
 
   std::ifstream file(path.c_str());
   if (!file.is_open())
@@ -80,4 +81,9 @@ Configuration::Configuration(const std::string &path)
 const std::string& Configuration::GetDatabaseConnectionString() const
 {
   return m_config.find("dbconn")->second;
+}
+
+const std::string& Configuration::GetSchedulingMethod() const
+{
+  return m_config.find("scheduler")->second;
 }

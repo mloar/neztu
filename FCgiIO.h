@@ -139,6 +139,11 @@ namespace cgicc {
       return fErr;
     }
     //@}
+
+    inline void SetExitStatus(int status)
+    {
+      FCGX_SetExitStatus(status, fRequest.err);
+    }
     
   protected:
     FCGX_Request& 			fRequest;

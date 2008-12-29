@@ -23,6 +23,7 @@ class Configuration
     Configuration(const std::string &file);
 
     const std::string& GetDatabaseConnectionString() const;
+    const std::string& GetSchedulingMethod() const;
 };
 
 #endif

@@ -11,11 +11,27 @@
 #ifndef NEZTU_SCHEDULER_H
 #define NEZTU_SCHEDULER_H
 
+#include <vector>
+#include <list>
+
 #include "Database.h"
 
-struct Scheduler
+class Scheduler
 {
-    bool operator()(const Vote&, const Vote&);
+  enum
+  {
+    Fifo,
+    ShortestFirst
+  } m_schedulingMethod;
+
+  Database& m_db;
+  std::vector<Vote> m_votes;
+  std::list<std::vector<Vote>::iterator> m_schedule;
+
+public:
+  Scheduler(const Configuration&, Database&);
+  const Vote& GetNext();
+  const std::list<std::vector<Vote>::iterator>& GetSchedule();
 };
 
 #endif

@@ -13,19 +13,25 @@
 
 #include "Configuration.h"
 #include "Database.h"
+#include "Request.h"
 
-class Dispatcher
+namespace neztu
 {
-public:
-  Dispatcher(const Configuration &config);
-  void Dispatch(cgicc::FCgiIO&);
+  class Dispatcher
+  {
+    public:
+      Dispatcher(const Configuration &config);
+      void Dispatch(cgicc::FCgiIO &io);
 
-  typedef void(*path_handler)(cgicc::FCgiIO&, cgicc::Cgicc&, Database&);
+      //typedef void(*path_handler)(cgicc::FCgiIO&, cgicc::Cgicc&, Database&);
+      typedef void(*path_handler)(Request &);
 
-private:
-  typedef std::map<std::string, path_handler> PathMap;
-  PathMap m_paths;
-  Database m_db;
-};
+    private:
+      typedef std::map<std::string, path_handler> PathMap;
+      PathMap m_paths;
+      const Configuration &m_config;
+      Database m_db;
+  };
+}
 
 #endif

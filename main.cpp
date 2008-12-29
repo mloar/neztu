@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
   // We initialize the dispatcher outside of the loop so that we do
   // initialization tasks once and maintain a database connection between
   // requests.
-  Dispatcher dispatcher(config);
+  neztu::Dispatcher dispatcher(config);
 
   FCGX_Request req;
   FCGX_InitRequest(&req, 0, 0);

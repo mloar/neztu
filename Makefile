@@ -2,7 +2,7 @@
 
 all: neztu.fcgi neztud tagreader
 
-neztu.fcgi: main.o Configuration.o Database.o FCgiIO.o Dispatcher.o Scheduler.o
+neztu.fcgi: main.o Configuration.o Database.o FCgiIO.o Dispatcher.o Request.o Scheduler.o
 	g++ -Wall -Werror -pedantic -g -o $@ $^ -lpqxx -lfcgi++ -lcgicc
 
 neztud: Daemon.o Configuration.o Database.o Scheduler.o

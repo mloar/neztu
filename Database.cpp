@@ -96,8 +96,7 @@ public:
     pqxx::result R = T.exec(std::string("SELECT * FROM \"Tracks\" WHERE \"TrackId\"=") + m_trackId);
     if (R.empty())
     {
-      // XXX: throw exception?
-      m_track->TrackId = 0;
+      throw std::runtime_error("invalid TrackId");
     }
     else
     {
@@ -133,17 +132,29 @@ public:
 // g++ won't let me make these function-local - not sure if I'm doing something wrong or not
 class AddTrackFunctor : public pqxx::transactor<>
 {
-  Track m_track;
+  const Track &m_track;
+  unsigned int *m_trackId;
 
 public:
-  explicit AddTrackFunctor(const Track &track) :
-    m_track(track)
+  explicit AddTrackFunctor(const Track &track, unsigned int *trackId) :
+    m_track(track),
+    m_trackId(trackId)
   {
   }
 
   void operator()(argument_type &T)
   {
     T.prepared("addtrack")(m_track.Filename)(m_track.Title)(m_track.Artist)(m_track.Album)(m_track.Genre)(m_track.DiscNumber)(m_track.TrackNumber)(m_track.Length)(m_track.Uploader).exec();
+    pqxx::result R = T.prepared("getbyfilename")(m_track.Filename).exec();
+
+    if (R.empty())
+    {
+      throw std::runtime_error("could not retrieve assigned TrackId");
+    }
+
+    Track t;
+    PopulateTrack(&t, R[0]);
+    (*m_trackId) = t.TrackId;
   }
 };
 
@@ -261,8 +272,7 @@ public:
     pqxx::result R = T.exec(std::string("SELECT * FROM \"History\" LEFT JOIN \"Tracks\" ON \"History\".\"TrackId\"=\"Tracks\".\"TrackId\" ORDER BY \"Timestamp\" DESC LIMIT 1"));
     if (R.empty())
     {
-      // XXX: throw exception?
-      m_vote->ReqTrack.TrackId = 0;
+      throw std::runtime_error("history is empty");
     }
     else
     {
@@ -289,7 +299,9 @@ public:
     pqxx::result R = T.exec(std::string("SELECT * FROM \"Tracks\" WHERE \"Filename\"='") + T.esc(m_filename) + "'");
     if (R.empty())
     {
-      // XXX: throw exception?
+      // XXX: Blech.  For parity with the other GetTrack, this should throw.
+      // However, this function is primarily used by the TagReader, and this
+      // would amount to a throw in the common case, which I want to avoid.
       m_track->TrackId = 0;
     }
     else
@@ -377,17 +389,10 @@ public:
   void operator()(argument_type &T)
   {
     pqxx::result R = T.exec("SELECT * FROM \"Votes\" LEFT JOIN \"Tracks\" ON \"Votes\".\"TrackId\"=\"Tracks\".\"TrackId\" ORDER BY \"Timestamp\"");
-    if (R.empty())
+    m_votes->resize(R.size());
+    for (size_t j = 0; j < R.size(); j++)
     {
-      m_votes->resize(0);
-    }
-    else
-    {
-      m_votes->resize(R.size());
-      for (size_t j = 0; j < R.size(); j++)
-      {
-        PopulateVote(&(*m_votes)[j], R[j]);
-      }
+      PopulateVote(&(*m_votes)[j], R[j]);
     }
   }
 };
@@ -430,6 +435,7 @@ Database::Database(const Configuration &config) :
   m_conn.prepare("swap", "UPDATE \"Votes\" SET \"Timestamp\"=$1 WHERE \"UserName\"=$2 AND \"TrackId\"=$3")("timestamp", prepare::treat_string)("varchar", prepare::treat_string)("integer", prepare::treat_direct);
   m_conn.prepare("addtrack", "INSERT INTO \"Tracks\" (\"Filename\", \"Title\", \"Artist\", \"Album\", \"Genre\", \"DiscNumber\", \"TrackNumber\", \"Length\", \"Uploader\") VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)")("varchar", prepare::treat_string)("varchar", prepare::treat_string)("varchar", prepare::treat_string)("varchar", prepare::treat_string)("varchar", prepare::treat_string)("integer", prepare::treat_direct)("integer", prepare::treat_direct)("integer", prepare::treat_direct)("varchar", prepare::treat_string);
   m_conn.prepare("random", "SELECT * FROM \"Tracks\" ORDER BY random() LIMIT $1")("integer", prepare::treat_direct);
+  m_conn.prepare("getbyfilename", "SELECT * FROM \"Tracks\" WHERE \"Filename\" = $1")("varchar", prepare::treat_string);
 }
 
 Track Database::GetTrack(unsigned int TrackId)
@@ -472,10 +478,9 @@ void Database::GetVotes(std::vector<Vote> *out, const std::string &username)
 
 unsigned int Database::AddTrack(const Track &track)
 {
-  // XXX this is supposed to return the assigned track id
-  m_conn.perform(AddTrackFunctor(track));
-
-  return 0;
+  unsigned int ret;
+  m_conn.perform(AddTrackFunctor(track, &ret));
+  return ret;
 }
 
 void Database::AddVote(const std::string &username, unsigned int trackid)
