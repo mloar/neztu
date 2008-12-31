@@ -149,6 +149,12 @@ namespace neztu
     req.io << NeztuFooter();
   }
 
+  void redirect_index_handler(Request &req)
+  {
+    req.io << "Location: http://" << req.cgi.getEnvironment().getServerName()
+      << req.cgi.getEnvironment().getScriptName() << "/\r\n\r\n";
+  }
+
   void playlist_handler(Request &req)
   {
     FCgiIO &io = req.io;
@@ -339,7 +345,7 @@ namespace neztu
     m_paths.insert(std::make_pair("/resources/main.css", resource_handler));
     m_paths.insert(std::make_pair("/resources/Neztu.js", resource_handler));
     m_paths.insert(std::make_pair("/", index_handler));
-    m_paths.insert(std::make_pair("", index_handler));
+    m_paths.insert(std::make_pair("", redirect_index_handler));
   }
 
   void Dispatcher::Dispatch(cgicc::FCgiIO &io)
@@ -366,9 +372,16 @@ namespace neztu
         req.io << body() << html() << endl;
       }
     }
-    catch(exception& e) {
-      io << "Status: 500 Internal Server Error\r\n\r\n";
-      io.err() << e.what() << endl;
+    catch(std::exception& e)
+    {
+      if (io.good())
+      {
+        io << "Status: 500 Internal Server Error\r\n\r\n";
+      }
+      if (io.err().good())
+      {
+        io.err() << e.what() << endl;
+      }
     }
   }
 }
