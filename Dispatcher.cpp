@@ -1,7 +1,7 @@
 //+----------------------------------------------------------------------------
 //
 //  Copyright (c) 2008 Matthew Loar.
-//  See COPYING for license terms.
+//  See LICENSE for license terms.
 //
 //  Abstract:
 //      Implements the pages of the FastCGI application.

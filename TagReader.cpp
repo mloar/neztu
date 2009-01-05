@@ -1,7 +1,7 @@
 //+----------------------------------------------------------------------------
 //
 //  Copyright (c) 2008 Matthew Loar.
-//  See COPYING for license terms.
+//  See LICENSE for license terms.
 //
 //  Abstract:
 //      Implements reading of audio file meta data.
