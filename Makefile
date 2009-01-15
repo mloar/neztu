@@ -9,7 +9,7 @@ neztud: Daemon.o Configuration.o Database.o Scheduler.o
 	g++ -Wall -Werror -pedantic -g -o $@ $^ -lpqxx
 
 tagreader: TagReader.o Configuration.o Database.o
-	g++ -Wall -Werror -pedantic -g -o $@ $^ -lpqxx -ltag
+	g++ -Wall -Werror -pedantic -g -o $@ $^ -lboost_filesystem -lpqxx -ltag
 
 .cpp.o:
 	g++ -Wall -Werror -pedantic -g -c -I/usr/include -I/usr/include/taglib $<

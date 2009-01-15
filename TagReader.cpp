@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 
 #include <stdlib.h>
+#include <boost/filesystem.hpp>
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 
@@ -33,6 +34,39 @@ namespace neztu
     t.Length = f.audioProperties()->length();
 
     return t;
+  }
+}
+
+void ProcessPath(neztu::Database &db, const boost::filesystem::path &path)
+{
+  using namespace boost::filesystem;
+  using namespace neztu;
+
+  if (is_directory(path))
+  {
+    for (directory_iterator itr(path); itr!=directory_iterator(); ++itr)
+    {
+      ProcessPath(db, itr->path());
+    }
+  }
+  else if (is_regular(path) && path.string().find(".mp3") == path.string().length() - 4)
+  {
+    Track t;
+    t = db.GetTrack(path.string().c_str());
+    if (!t.TrackId)
+    {
+      t = TagReader::ReadFileTags(path.string().c_str());
+      if (t.Title.empty())
+      {
+        std::cerr << path << " has no title, not adding" << std::endl;
+      }
+      else
+      {
+        t.Uploader = "neztu";
+        db.AddTrack(t);
+        std::cout << "Added " << path << std::endl;
+      }
+    }
   }
 }
 
@@ -64,26 +98,8 @@ int main(int argc, char* argv[])
       {
         try
         {
-          Track t;
-          t = db.GetTrack(path);
-          if (t.TrackId)
-          {
-            fprintf(stderr, "Already have %s\n", path);
-          }
-          else
-          {
-            t = TagReader::ReadFileTags(path);
-            if (t.Title.empty())
-            {
-              fprintf(stderr, "%s has no title, not adding\n", path);
-            }
-            else
-            {
-              t.Uploader = "neztu";
-              db.AddTrack(t);
-              printf("Added %s\n", path);
-            }
-          }
+          ProcessPath(db, path);
+
         }
         catch (std::exception &e)
         {
