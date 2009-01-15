@@ -352,12 +352,10 @@ namespace neztu
   {
     try
     {
-      //cgicc::Cgicc cgi(&io);
       Request req(m_config, m_db, io);
       PathMap::iterator iter = m_paths.find(req.cgi.getEnvironment().getPathInfo());
       if (iter != m_paths.end())
       {
-        //iter->second(io, cgi, m_db);
         iter->second(req);
       }
       else
