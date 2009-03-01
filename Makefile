@@ -5,11 +5,8 @@ all: neztu.fcgi neztud tagreader
 neztu.fcgi: main.o Configuration.o Database.o FCgiIO.o Dispatcher.o Request.o Scheduler.o
 	g++ -Wall -Werror -pedantic -g -o $@ $^ -lpqxx -lfcgi++ -lcgicc
 
-neztud: Daemon.o Configuration.o Database.o Scheduler.o mp3.o ogg.o
-	g++ -Wall -Werror -pedantic -g -o $@ $^ -lopenal -lmpeg3 -logg -lvorbis -lvorbisfile -lalut -lpqxx
-
-ald: ald.o
-	g++ -Wall -Werror -pedantic -g -o $@ $^ -lopenal
+neztud: Daemon.o Configuration.o Database.o Scheduler.o Player.o MP3Decoder.o
+	g++ -Wall -Werror -pedantic -g -o $@ $^ -lopenal -lmpg123 -logg -lvorbis -lvorbisfile -lalut -lpqxx
 
 tagreader: TagReader.o Configuration.o Database.o
 	g++ -Wall -Werror -pedantic -g -o $@ $^ -lboost_filesystem -lpqxx -ltag

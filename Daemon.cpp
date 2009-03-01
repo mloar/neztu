@@ -10,6 +10,7 @@
 
 #include <list>
 #include <iostream>
+#include <string>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
@@ -17,68 +18,35 @@
 
 #include "Database.h"
 #include "Scheduler.h"
-
-#include <AL/alut.h>
-#include <iostream>
-
-#include "streamer.h"
-#include "ogg.h"
-#include "mp3.h"
+#include "Player.h"
 
 using namespace neztu;
 
-int skip = 0;
+static volatile bool skip;
+
+bool should_cancel()
+{
+    return skip;
+}
 
 void playit(const char *file)
 {
-    streamer* stream;
-    alutInit(NULL, NULL);
-
-    if (mp3_stream::try_open(file))
-    {
-        stream = new mp3_stream;
-    }
-    else
-    {
-        stream = new ogg_stream;
-    }
-
+    skip = false;
     try
     {
-        stream->open(file);
-
-        stream->display();
-
-        if(!stream->playback())
-            throw string("File refused to play.");
-
-        while(stream->update() && !skip)
-        {
-            if(!stream->playing())
-            {
-                if(!stream->playback())
-                    throw string("Playback abruptly stopped.");
-                else
-                    cout << "Playback was interrupted.\n";
-            }
-        }
-
-        skip = 0;
+        Player player(file, should_cancel);
+        player.Play();
     }
-    catch(string error)
+    catch (std::string error)
     {
-        cout << error;
+        std::cerr << error << std::endl;
     }
-
-    delete stream;
-
-    alutExit();
 }
 
 void sig_handler(int signal)
 {
     if (signal == SIGUSR1)
-        skip = 1;
+        skip = true;
 }
 
 int main(int argc, char* argv[])

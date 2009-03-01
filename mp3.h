@@ -2,25 +2,21 @@
 #define NEZTU_MP3_H
 
 #include <string>
-#include <iostream>
 #include "streamer.h"
 using namespace std;
 
 #include <AL/al.h>
-#include <libmpeg3.h>
+#include <mpg123.h>
 
-#define BUFSIZE (4096 * 4)
+#define BUFSIZE (4096 * 16)
+#define BUFCOUNT 4
 
 class mp3_stream : public streamer
 {
     public:
-        virtual ~mp3_stream();
-        static bool try_open(const string &path);
-        virtual void open(const char *path);
-        virtual void display();
-        virtual bool playback();
-        virtual bool playing();
-        virtual bool update();
+        mp3_stream();
+        virtual void play(const char *path);
+        virtual void skip();
 
     protected:
 
@@ -31,10 +27,12 @@ class mp3_stream : public streamer
 
     private:
 
-        mpeg3_t*        mp3File;
+        mpg123_handle*        mp3File;
         int channels;
+        long rate;
+        int m_skip;
 
-        ALuint buffers[2];
+        ALuint buffers[BUFCOUNT];
         ALuint source;
         ALenum format;
 };
