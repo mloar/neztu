@@ -12,6 +12,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 #include <string.h>
 
 #include "Database.h"
@@ -25,6 +26,8 @@
 #include "mp3.h"
 
 using namespace neztu;
+
+int skip = 0;
 
 void playit(const char *file)
 {
@@ -47,30 +50,35 @@ void playit(const char *file)
         stream->display();
 
         if(!stream->playback())
-            throw string("Ogg refused to play.");
+            throw string("File refused to play.");
 
-        while(stream->update())
+        while(stream->update() && !skip)
         {
             if(!stream->playing())
             {
                 if(!stream->playback())
-                    throw string("Ogg abruptly stopped.");
+                    throw string("Playback abruptly stopped.");
                 else
-                    cout << "Ogg stream was interrupted.\n";
+                    cout << "Playback was interrupted.\n";
             }
         }
 
-        cout << "Program normal termination.";
+        skip = 0;
     }
     catch(string error)
     {
         cout << error;
-        cin.get();
     }
 
     delete stream;
 
     alutExit();
+}
+
+void sig_handler(int signal)
+{
+    if (signal == SIGUSR1)
+        skip = 1;
 }
 
 int main(int argc, char* argv[])
@@ -84,6 +92,15 @@ int main(int argc, char* argv[])
   {
     std::cerr << "Could not fork" << std::endl;
     return 1;
+  }
+
+  struct sigaction act;
+  memset(&act, 0, sizeof(struct sigaction));
+  act.sa_handler = sig_handler;
+  if (sigaction(SIGUSR1, &act, NULL))
+  {
+      std::cerr << "sigaction failed" << std::endl;
+      return 1;
   }
 
   for (;;)
