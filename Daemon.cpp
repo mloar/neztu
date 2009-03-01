@@ -12,11 +12,66 @@
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "Database.h"
 #include "Scheduler.h"
 
+#include <AL/alut.h>
+#include <iostream>
+
+#include "streamer.h"
+#include "ogg.h"
+#include "mp3.h"
+
 using namespace neztu;
+
+void playit(const char *file)
+{
+    streamer* stream;
+    alutInit(NULL, NULL);
+
+    if (mp3_stream::try_open(file))
+    {
+        stream = new mp3_stream;
+    }
+    else
+    {
+        stream = new ogg_stream;
+    }
+
+    try
+    {
+        stream->open(file);
+
+        stream->display();
+
+        if(!stream->playback())
+            throw string("Ogg refused to play.");
+
+        while(stream->update())
+        {
+            if(!stream->playing())
+            {
+                if(!stream->playback())
+                    throw string("Ogg abruptly stopped.");
+                else
+                    cout << "Ogg stream was interrupted.\n";
+            }
+        }
+
+        cout << "Program normal termination.";
+    }
+    catch(string error)
+    {
+        cout << error;
+        cin.get();
+    }
+
+    delete stream;
+
+    alutExit();
+}
 
 int main(int argc, char* argv[])
 {
@@ -24,7 +79,8 @@ int main(int argc, char* argv[])
   Database db(config);
   Scheduler scheduler(config, db);
 
-  if (daemon(0, 0))
+  // XXX: use getopt or something
+  if ((argc < 2 || strcmp(argv[1], "-d")) && daemon(0, 0))
   {
     std::cerr << "Could not fork" << std::endl;
     return 1;
@@ -39,13 +95,8 @@ int main(int argc, char* argv[])
       db.RemoveVote(v.UserName, v.ReqTrack.TrackId);
       db.AddHistory(v.UserName, v.ReqTrack.TrackId);
 
-      std::stringstream str;
-      str << "mpg123 \"" << v.ReqTrack.Filename << "\"";
-      printf("%s\n", str.str().c_str());
-      if (system(str.str().c_str()))
-      {
-        // XXX Report this error to the database
-      }
+      printf("%s\n", v.ReqTrack.Filename.c_str());
+      playit(v.ReqTrack.Filename.c_str());
     }
     else
     {
@@ -53,13 +104,8 @@ int main(int argc, char* argv[])
       printf("No votes...playing random song\n");
       db.GetRandomTracks(&tracks, 1);
       db.AddHistory("neztu", tracks[0].TrackId);
-      std::stringstream str;
-      str << "mpg123 \"" << tracks[0].Filename << "\"";
-      printf("%s\n", str.str().c_str());
-      if (system(str.str().c_str()))
-      {
-        // XXX Report this error to the database
-      }
+      printf("%s\n", tracks[0].Filename.c_str());
+      playit(tracks[0].Filename.c_str());
     }
   }
 
