@@ -61,7 +61,7 @@ function skipSong() {
   var x = GetXMLHttpRequest();
   if (!x) {
     // Can't do AJAX - do it the old fashioned way
-    window.navigate("skip");
+    return true;
   } else {
       var requestTimer = setTimeout(
               function() {
@@ -101,7 +101,7 @@ function voteForSong(trackId) {
   var x = GetXMLHttpRequest();
   if (!x) {
     // Can't do AJAX - do it the old fashioned way
-    window.navigate("vote?trackId=" + trackId);
+    return true;
   } else {
       var requestTimer = setTimeout(
               function() {
