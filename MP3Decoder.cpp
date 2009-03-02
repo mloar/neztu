@@ -9,7 +9,6 @@
 //------------------------------------------------------------------------------
 
 #include <string>
-#include <mpg123.h>
 #include "MP3Decoder.h"
 
 MP3Decoder::MP3Decoder(const char *filename)
@@ -29,7 +28,9 @@ MP3Decoder::MP3Decoder(const char *filename)
     if (mpg123_open(mp3File, const_cast<char*>(filename)) != MPG123_OK || mpg123_getformat(mp3File, &rate, &channels, &encoding) != MPG123_OK)
         throw std::string("Could not open MP3 file.");
 
-    mpg123_format(mp3File, rate, channels, encoding);
+    if (mpg123_format(mp3File, rate, channels, encoding) != MPG123_OK)
+        throw std::string("Could not set format of MP3 file.");
+
     if(encoding != MPG123_ENC_SIGNED_16)
     {
         throw std::string("unexpected encoding");
@@ -71,5 +72,32 @@ bool MP3Decoder::FillBuffer(ALuint buffer)
 
 bool MP3Decoder::CanHandle(const char *filename)
 {
-    return true;
+    bool ret = false;
+    mpg123_handle *mp3File;
+    if (mpg123_init() == MPG123_OK)
+    {
+        int err;
+        if ((mp3File = mpg123_new(NULL, &err)) != NULL)
+        {
+            if (mpg123_open(mp3File, const_cast<char*>(filename)) == MPG123_OK)
+            {
+                int channels, encoding;
+                long rate;
+
+                if (mpg123_getformat(mp3File, &rate, &channels, &encoding) == MPG123_OK)
+                {
+                    if (mpg123_format(mp3File, rate, channels, encoding) == MPG123_OK)
+                    {
+                        ret = true;
+                    }
+                }
+
+                mpg123_close(mp3File);
+            }
+            mpg123_delete(mp3File);
+        }
+        mpg123_exit();
+    }
+
+    return ret;
 }

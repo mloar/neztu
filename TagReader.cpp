@@ -49,7 +49,11 @@ void ProcessPath(neztu::Database &db, const boost::filesystem::path &path)
       ProcessPath(db, itr->path());
     }
   }
-  else if (is_regular(path) && path.string().find(".mp3") == path.string().length() - 4)
+  else if (is_regular(path) &&
+          (
+              path.string().find(".mp3") == path.string().length() - 4
+              || path.string().find(".ogg") == path.string().length() - 4)
+          )
   {
     Track t;
     t = db.GetTrack(path.string().c_str());

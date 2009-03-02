@@ -8,6 +8,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
 #include <iomanip>
 #include <string>
 
@@ -17,6 +18,7 @@
 
 #include "Player.h"
 #include "MP3Decoder.h"
+#include "OggVorbisDecoder.h"
 
 #define BUFCOUNT 4
 
@@ -24,7 +26,11 @@ Player::Player(const char *filename, bool (*cancel_func)()) :
     m_cancel_func(cancel_func),
     m_decoder(NULL)
 {
-    if (MP3Decoder::CanHandle(filename))
+    if (OggVorbisDecoder::CanHandle(filename))
+    {
+        m_decoder = new OggVorbisDecoder(filename);
+    }
+    else if (MP3Decoder::CanHandle(filename))
     {
         m_decoder = new MP3Decoder(filename);
     }
