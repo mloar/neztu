@@ -26,7 +26,8 @@ namespace neztu
 
     const std::string& GetDatabaseConnectionString() const;
     const std::string& GetSchedulingMethod() const;
+    const std::string& GetSkipCommand() const;
   };
 }
 
-#endif
+#endif // NEZTU_CONFIGURATION_H

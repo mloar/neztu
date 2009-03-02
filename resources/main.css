@@ -39,12 +39,19 @@ BODY {
 
 #nowplayingleft {
   float:left;
-  font-size:14pt;
-  font-weight:bold;
-  line-height:200%;
   vertical-align:middle;
   text-align:right;
   width:50%;
+}
+
+#nowplayingtext {
+  font-size:14pt;
+  font-weight:bold;
+  line-height:200%;
+}
+
+#skiplink {
+  font-size:10pt;
 }
 
 #nowplayingright {

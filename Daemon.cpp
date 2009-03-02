@@ -22,6 +22,10 @@
 
 using namespace neztu;
 
+// This variable can be set in a signal handler, therefore good practice
+// dictates that we declare it volatile.  It is unlikely that register promotion
+// would cause aberrant behavior in this case.  This variable is only accessed
+// by a single thread, so memory fencing is not required.
 static volatile bool skip;
 
 bool should_cancel()

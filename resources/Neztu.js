@@ -26,7 +26,7 @@ function updateNowPlaying() {
     window.reload();
   } else {
     x.open("GET", "nowplaying");
-    x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
+    x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8", true);
     x.setRequestHeader("Accept-Encoding", "gzip, deflate");
     x.onreadystatechange = function() {
       if (x.readyState != 4) {
@@ -55,4 +55,84 @@ function updateNowPlaying() {
     }
     x.send(null);
   }
+}
+
+function skipSong() {
+  var x = GetXMLHttpRequest();
+  if (!x) {
+    // Can't do AJAX - do it the old fashioned way
+    window.navigate("skip");
+  } else {
+      var requestTimer = setTimeout(
+              function() {
+              x.abort();
+              document.getElementById("statusbar").innerHTML = "Skip song request timed out."
+              }
+              , 10000);
+      x.open("GET", "skip", true);
+      x.onreadystatechange = function() {
+          if (x.readyState != 4) {
+              return;
+          }
+
+          clearTimeout(requestTimer);
+
+          if (x.status == 204)
+          {
+              document.getElementById("statusbar").innerHTML = "Song skipped.";
+              setTimeout(updateNowPlaying, 500);
+          }
+          else if (x.status == 403)
+          {
+              document.getElementById("statusbar").innerHTML = "Server rejected our skip song request.";
+          }
+          else
+          {
+              document.getElementById("statusbar").innerHTML = "Unexpected failure trying to skip song.";
+          }
+      }
+      x.send(null);
+  }
+
+  return false;
+}
+
+function voteForSong(trackId) {
+  var x = GetXMLHttpRequest();
+  if (!x) {
+    // Can't do AJAX - do it the old fashioned way
+    window.navigate("vote?trackId=" + trackId);
+  } else {
+      var requestTimer = setTimeout(
+              function() {
+              x.abort();
+              document.getElementById("statusbar").innerHTML = "Vote timed out."
+              }
+              , 10000);
+      x.open("GET", "vote?trackId=" + trackId , true);
+      x.onreadystatechange = function() {
+          if (x.readyState != 4) {
+              return;
+          }
+
+          clearTimeout(requestTimer);
+
+          if (x.status == 204)
+          {
+              document.getElementById("statusbar").innerHTML = "Voted for track " + trackId + ".";
+              setTimeout(updateNowPlaying, 100);
+          }
+          else if (x.status == 403)
+          {
+              document.getElementById("statusbar").innerHTML = "Server rejected our vote.";
+          }
+          else
+          {
+              document.getElementById("statusbar").innerHTML = "Unexpected failure trying to vote.";
+          }
+      }
+      x.send(null);
+  }
+
+  return false;
 }

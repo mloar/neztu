@@ -92,7 +92,7 @@ void Player::Play()
             alGetSourcei(source, AL_BUFFERS_PROCESSED, &processed);
             check();
 
-            while (processed--)
+            while (active && processed--)
             {
                 ALuint buffer;
 
@@ -116,6 +116,15 @@ void Player::Play()
 
             usleep(1000);
         } while (active && !m_cancel_func());
+
+        // Wait for all of the buffers to be played.
+        ALenum state;
+        do
+        {
+            alGetSourcei(source, AL_SOURCE_STATE, &state);
+            check();
+            usleep(1000);
+        } while (state == AL_PLAYING);
     }
 
 cleanup:

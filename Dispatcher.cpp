@@ -44,6 +44,7 @@ namespace neztu
         out << "<table id=\"menu\">";
         out << "<tr><td><a href=\"./\">Home</a></td><td><a href=\"playlist\">Your Playlist</a></td><td><a href=\"search\">Search Tracks</a></td><td><a href=\"add\">Add Tracks</a></td></tr>";
         out << "</table></div>";
+        out << "<div id=\"statusbar\"></div>";
         out << "<div id=\"main\">";
       }
   };
@@ -54,7 +55,11 @@ namespace neztu
       virtual void render(std::ostream& out) const
       {
         out << "</div>";
-        out << "<div id=\"footer\"><div id=\"nowplaying\"><div id=\"nowplayingleft\">Now Playing:</div><div id=\"nowplayingright\"><span id=\"NowPlayingTitle\"></span><br><span id=\"NowPlayingArtist\"></span><br></div></div></div>";
+        out << "<div id=\"footer\">";
+        out << "<div id=\"nowplaying\">";
+        out << "<div id=\"nowplayingleft\"><span id=\"nowplayingtext\">Now Playing:</span><br><span id=\"skiplink\"><a href=\"skip\" onclick=\"javascript:return skipSong();\">Skip!</a></span></div><div id=\"nowplayingright\"><span id=\"NowPlayingTitle\"></span><br><span id=\"NowPlayingArtist\"></span><br></div>";
+        out << "</div>";
+        out << "</div>";
         out << "<script type=\"text/javascript\">updateNowPlaying();</script>";
         out << body() << html();
       }
@@ -107,7 +112,7 @@ namespace neztu
       out << "<tr><th></th><th>Title</th><th>Artist</th><th>Album</th><th>Length</th></tr>" << endl;
       for (std::vector<Track>::iterator iter = tracks.begin(); iter != tracks.end(); iter++)
       {
-        out << "<tr><td>" << "<a href=\"vote?trackId=" << iter->TrackId << "\">Vote</a></td>";
+        out << "<tr><td>" << "<a onclick=\"javascript:return voteForSong(" << iter->TrackId << ");\" href=\"vote?trackId=" << iter->TrackId << "\">Vote</a></td>";
         out << "<td>" << iter->Title << "</td><td>" << iter->Artist << "</td>";
         out << "<td>" << iter->Album << "</td>";
         out << "<td>";
@@ -137,6 +142,22 @@ namespace neztu
     }
 
     io << "Status: 204 No Content\r\n\r\n";
+  }
+
+  void skip_handler(Request &req)
+  {
+    Vote v = req.db.GetCurrent();
+    if (v.UserName == "neztu" || v.UserName == req.cgi.getEnvironment().getRemoteUser())
+    {
+        system(req.config.GetSkipCommand().c_str());
+        req.io << "Status: 204 No Content\r\n\r\n";
+    }
+    else
+    {
+        req.io << "Status: 403 Forbidden\r\n";
+        req.io << "Content-type: text/plain\r\n\r\n";
+        req.io << "Not your song!\r\n";
+    }
   }
 
   void index_handler(Request &req)
@@ -266,8 +287,7 @@ namespace neztu
         io << "<table border=\"1\"><th></th><th>Title</th><th>Artist</th><th>Album</th></tr>";
         for (std::vector<Track>::iterator iter = tracks.begin(); iter != tracks.end(); iter++)
         {
-          // XXX need a method of providing confirmation that vote was recorded
-          io << "<tr><td><a href=\"vote?trackId=" << iter->TrackId << "\">Vote</a></td>";
+          io << "<tr><td><a onclick=\"javascript:return voteForSong(" << iter->TrackId << ");\" href=\"vote?trackId=" << iter->TrackId << "\">Vote</a></td>";
           io << "<td>" << iter->Title << "</td><td>" << iter->Artist << "</td><td>" << iter->Album << "</td></tr>";
         }
         io << "</table>";
@@ -338,6 +358,7 @@ namespace neztu
     m_db(config)
   {
     m_paths.insert(std::make_pair("/vote", vote_handler));
+    m_paths.insert(std::make_pair("/skip", skip_handler));
     m_paths.insert(std::make_pair("/playlist", playlist_handler));
     m_paths.insert(std::make_pair("/search", search_handler));
     m_paths.insert(std::make_pair("/nowplaying", nowplaying_handler));
