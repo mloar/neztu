@@ -36,6 +36,11 @@ MP3Decoder::MP3Decoder(const char *filename)
         throw std::string("unexpected encoding");
     }
 
+    if (mpg123_param(mp3File, MPG123_RVA, MPG123_RVA_MIX, 0) != MPG123_OK)
+    {
+        throw std::string("Could not enable replay gain.");
+    }
+
     if(channels == MPG123_MONO)
         format = AL_FORMAT_MONO16;
     else if (channels == MPG123_STEREO)
