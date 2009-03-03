@@ -138,7 +138,6 @@ void Player::check()
     if(error != AL_NO_ERROR)
     {
         std::cerr << error << std::endl;
-        abort();
         throw std::string("OpenAL error was raised.");
     }
 }
