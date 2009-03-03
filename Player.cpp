@@ -109,14 +109,17 @@ void Player::Play()
             usleep(1000);
         } while (active && !m_cancel_func());
 
-        // Wait for all of the buffers to be played.
-        ALenum state;
-        do
+        // Wait for all of the buffers to be played unless skipping.
+        if (!active)
         {
-            alGetSourcei(source, AL_SOURCE_STATE, &state);
-            check();
-            usleep(1000);
-        } while (state == AL_PLAYING);
+            ALenum state;
+            do
+            {
+                alGetSourcei(source, AL_SOURCE_STATE, &state);
+                check();
+                usleep(1000);
+            } while (state == AL_PLAYING);
+        }
     }
 
 cleanup:
