@@ -20,19 +20,18 @@
 #include "MP3Decoder.h"
 #include "OggVorbisDecoder.h"
 
-#define BUFCOUNT 4
+static const size_t buffer_count = 4;
 
 Player::Player(const char *filename, bool (*cancel_func)()) :
-    m_cancel_func(cancel_func),
-    m_decoder(NULL)
+    m_cancel_func(cancel_func)
 {
     if (OggVorbisDecoder::CanHandle(filename))
     {
-        m_decoder = new OggVorbisDecoder(filename);
+        m_decoder.reset(new OggVorbisDecoder(filename));
     }
     else if (MP3Decoder::CanHandle(filename))
     {
-        m_decoder = new MP3Decoder(filename);
+        m_decoder.reset(new MP3Decoder(filename));
     }
     else
     {
@@ -41,20 +40,13 @@ Player::Player(const char *filename, bool (*cancel_func)()) :
 
 }
 
-Player::~Player()
-{
-    if (m_decoder)
-        delete m_decoder;
-}
-
-
 void Player::Play()
 {
     ALuint source;
-    ALuint buffers[BUFCOUNT];
+    ALuint buffers[buffer_count];
 
     alutInit(NULL, NULL);
-    alGenBuffers(BUFCOUNT, buffers);
+    alGenBuffers(buffer_count, buffers);
     check();
     alGenSources(1, &source);
     check();
@@ -70,14 +62,14 @@ void Player::Play()
     alSourcei (source, AL_SOURCE_RELATIVE, AL_TRUE      );
     check();
 
-    for (int i = 0; i < BUFCOUNT; i++)
+    for (size_t i = 0; i < buffer_count; i++)
     {
         if(!m_decoder->FillBuffer(buffers[i]))
             goto cleanup;
         check();
     }
 
-    alSourceQueueBuffers(source, BUFCOUNT, buffers);
+    alSourceQueueBuffers(source, buffer_count, buffers);
     check();
 
     alSourcePlay(source);
@@ -134,7 +126,7 @@ cleanup:
     check();
     alDeleteSources(1, &source);
     check();
-    alDeleteBuffers(BUFCOUNT, buffers);
+    alDeleteBuffers(buffer_count, buffers);
     check();
     alutExit();
 }

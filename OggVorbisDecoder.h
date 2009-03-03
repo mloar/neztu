@@ -22,7 +22,7 @@ class OggVorbisDecoder: public Decoder
 {
     public:
         OggVorbisDecoder(const char *filename);
-        ~OggVorbisDecoder();
+        virtual ~OggVorbisDecoder();
         static bool CanHandle(const char *filename);
         virtual bool FillBuffer(ALuint buffer);
 
@@ -31,7 +31,6 @@ class OggVorbisDecoder: public Decoder
 
     private:
         int             format;
-        FILE*           oggFile;
         OggVorbis_File  oggStream;
         vorbis_info*    vorbisInfo;
         vorbis_comment* vorbisComment;

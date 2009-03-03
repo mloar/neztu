@@ -18,6 +18,7 @@
 OggVorbisDecoder::OggVorbisDecoder(const char *path)
 {
     int result;
+    FILE *oggFile;
 
     if(!(oggFile = fopen(path, "rb")))
         throw std::string("Could not open Ogg file.");
@@ -37,10 +38,10 @@ OggVorbisDecoder::OggVorbisDecoder(const char *path)
         format = AL_FORMAT_STEREO16;
 }
 
+// Class is polymorphic - virtual destructor required.
 OggVorbisDecoder::~OggVorbisDecoder()
 {
     ov_clear(&oggStream);
-    fclose(oggFile);
 }
 
 bool OggVorbisDecoder::FillBuffer(ALuint buffer)

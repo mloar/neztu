@@ -11,6 +11,7 @@
 #ifndef NEZTU_PLAYER_H
 #define NEZTU_PLAYER_H
 
+#include <memory>
 #include <AL/al.h>
 
 class Decoder
@@ -23,12 +24,11 @@ class Player
 {
     public:
         Player(const char *filename, bool (*cancel_func)());
-        ~Player();
         void Play();
 
     private:
         bool (*m_cancel_func)();
-        Decoder *m_decoder;
+        std::auto_ptr<Decoder> m_decoder;
 
         void check();
 };

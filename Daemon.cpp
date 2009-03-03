@@ -45,6 +45,10 @@ void playit(const char *file)
     {
         std::cerr << error << std::endl;
     }
+    catch (std::exception &e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 }
 
 void sig_handler(int signal)
