@@ -20,20 +20,20 @@
 
 class OggVorbisDecoder: public Decoder
 {
-    public:
-        OggVorbisDecoder(const char *filename);
-        virtual ~OggVorbisDecoder();
-        static bool CanHandle(const char *filename);
-        virtual bool FillBuffer(ALuint buffer);
+public:
+    OggVorbisDecoder(const char *filename);
+    virtual ~OggVorbisDecoder();
+    static bool CanHandle(const char *filename);
+    virtual bool FillBuffer(ALuint buffer);
 
-    protected:
-        std::string errorString(int code);
+protected:
+    std::string errorString(int code);
 
-    private:
-        int             format;
-        OggVorbis_File  oggStream;
-        vorbis_info*    vorbisInfo;
-        vorbis_comment* vorbisComment;
+private:
+    int             format;
+    OggVorbis_File  oggStream;
+    vorbis_info*    vorbisInfo;
+    vorbis_comment* vorbisComment;
 };
 
 #endif // NEZTU_OGGVORBISDECODER_H

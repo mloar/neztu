@@ -16,21 +16,21 @@
 
 class Decoder
 {
-    public:
-        virtual bool FillBuffer(ALuint buffer) = 0;
+public:
+    virtual bool FillBuffer(ALuint buffer) = 0;
 };
 
 class Player
 {
-    public:
-        Player(const char *filename, bool (*cancel_func)());
-        void Play();
+public:
+    Player(const char *filename, bool (*cancel_func)());
+    void Play();
 
-    private:
-        bool (*m_cancel_func)();
-        std::auto_ptr<Decoder> m_decoder;
+private:
+    bool (*m_cancel_func)();
+    std::auto_ptr<Decoder> m_decoder;
 
-        void check();
+    void check();
 };
 
 #endif // NEZTU_PLAYER_H

@@ -17,21 +17,21 @@
 
 namespace neztu
 {
-  class Dispatcher
-  {
+    class Dispatcher
+    {
     public:
-      Dispatcher(const Configuration &config);
-      void Dispatch(cgicc::FCgiIO &io);
+        Dispatcher(const Configuration &config);
+        void Dispatch(cgicc::FCgiIO &io);
 
-      //typedef void(*path_handler)(cgicc::FCgiIO&, cgicc::Cgicc&, Database&);
-      typedef void(*path_handler)(Request &);
+        //typedef void(*path_handler)(cgicc::FCgiIO&, cgicc::Cgicc&, Database&);
+        typedef void(*path_handler)(Request &);
 
     private:
-      typedef std::map<std::string, path_handler> PathMap;
-      PathMap m_paths;
-      const Configuration &m_config;
-      Database m_db;
-  };
+        typedef std::map<std::string, path_handler> PathMap;
+        PathMap m_paths;
+        const Configuration &m_config;
+        Database m_db;
+    };
 }
 
 #endif

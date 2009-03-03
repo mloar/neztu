@@ -12,12 +12,16 @@
 
 namespace neztu
 {
-  Request::Request(const Configuration &conf, Database &database, cgicc::FCgiIO &fcgiIo) :
-    config(conf),
-    db(database),
-    io(fcgiIo),
-    cgi(&io)
-  {
-  }
+    Request::Request(
+        const Configuration &conf,
+        Database &database,
+        cgicc::FCgiIO &fcgiIo
+        ) :
+        config(conf),
+        db(database),
+        io(fcgiIo),
+        cgi(&io)
+    {
+    }
 }
 

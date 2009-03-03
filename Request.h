@@ -19,17 +19,17 @@
 
 namespace neztu
 {
-  class Request
-  {
-  public:
-    const Configuration &config;
-    Database &db;
-    cgicc::FCgiIO &io;
-    cgicc::Cgicc cgi;
+    class Request
+    {
+    public:
+        const Configuration &config;
+        Database &db;
+        cgicc::FCgiIO &io;
+        cgicc::Cgicc cgi;
 
-  public:
-    Request(const Configuration &config, Database &database, cgicc::FCgiIO &io);
-  };
+    public:
+        Request(const Configuration &config, Database &database, cgicc::FCgiIO &io);
+    };
 }
 
 #endif

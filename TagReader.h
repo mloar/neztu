@@ -13,11 +13,11 @@
 
 namespace neztu
 {
-  class TagReader
-  {
+    class TagReader
+    {
     public:
-      static Track ReadFileTags(const std::string &file);
-  };
+        static Track ReadFileTags(const std::string &file);
+    };
 }
 
 #endif

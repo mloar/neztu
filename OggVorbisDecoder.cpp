@@ -53,7 +53,15 @@ bool OggVorbisDecoder::FillBuffer(ALuint buffer)
 
     while(size < BUFFER_SIZE)
     {
-        result = ov_read(&oggStream, pcm + size, BUFFER_SIZE - size, 0, 2, 1, &section);
+        result = ov_read(
+            &oggStream,
+            pcm + size,
+            BUFFER_SIZE - size,
+            0,
+            2,
+            1,
+            &section
+            );
 
         if(result > 0)
             size += result;
@@ -85,7 +93,9 @@ std::string OggVorbisDecoder::errorString(int code)
         case OV_EBADHEADER:
             return std::string("Invalid Vorbis header.");
         case OV_EFAULT:
-            return std::string("Internal logic fault (bug or heap/stack corruption.");
+            return std::string(
+                "Internal logic fault (bug or heap/stack corruption."
+                );
         default:
             return std::string("Unknown Ogg error.");
     }

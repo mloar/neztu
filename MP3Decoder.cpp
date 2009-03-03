@@ -75,9 +75,15 @@ bool MP3Decoder::CanHandle(const char *filename)
                 int channels, encoding;
                 long rate;
 
-                if (mpg123_getformat(mp3File, &rate, &channels, &encoding) == MPG123_OK)
+                if (
+                    mpg123_getformat(mp3File, &rate, &channels, &encoding)
+                    == MPG123_OK
+                    )
                 {
-                    if (mpg123_format(mp3File, rate, channels, encoding) == MPG123_OK)
+                    if (
+                        mpg123_format(mp3File, rate, channels, encoding)
+                        == MPG123_OK
+                        )
                     {
                         ret = true;
                     }

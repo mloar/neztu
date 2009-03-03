@@ -16,18 +16,18 @@
 
 namespace neztu
 {
-  class Configuration
-  {
-    typedef std::map<std::string, std::string> EntryMap;
-    EntryMap m_config;
+    class Configuration
+    {
+        typedef std::map<std::string, std::string> EntryMap;
+        EntryMap m_config;
 
     public:
-    Configuration(const std::string &file);
+        Configuration(const std::string &file);
 
-    const std::string& GetDatabaseConnectionString() const;
-    const std::string& GetSchedulingMethod() const;
-    const std::string& GetSkipCommand() const;
-  };
+        const std::string& GetDatabaseConnectionString() const;
+        const std::string& GetSchedulingMethod() const;
+        const std::string& GetSkipCommand() const;
+    };
 }
 
 #endif // NEZTU_CONFIGURATION_H
