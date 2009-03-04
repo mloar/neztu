@@ -27,6 +27,7 @@ namespace neztu
         const std::string& GetDatabaseConnectionString() const;
         const std::string& GetSchedulingMethod() const;
         const std::string& GetSkipCommand() const;
+        const std::string& GetApplicationDirectory() const;
     };
 }
 

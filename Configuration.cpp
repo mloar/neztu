@@ -25,6 +25,7 @@ namespace neztu
         m_config.insert(std::make_pair("dbconn", ""));
         m_config.insert(std::make_pair("scheduler", ""));
         m_config.insert(std::make_pair("skipCommand", ""));
+        m_config.insert(std::make_pair("applicationDir", ""));
 
         std::ifstream file(path.c_str());
         if (!file.is_open())
@@ -94,5 +95,10 @@ namespace neztu
     const std::string& Configuration::GetSkipCommand() const
     {
         return m_config.find("skipCommand")->second;
+    }
+
+    const std::string& Configuration::GetApplicationDirectory() const
+    {
+        return m_config.find("applicationDir")->second;
     }
 }
