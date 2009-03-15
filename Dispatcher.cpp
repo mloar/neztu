@@ -197,7 +197,6 @@ namespace neztu
         FCgiIO &io = req.io;
         Cgicc &cgi = req.cgi;
         Database &db = req.db;
-        io << NeztuHeading() << endl;
 
         cgicc::form_iterator swap = cgi["swap"];
         if (swap != cgi.getElements().end() && swap->getValue() == "yes")
@@ -229,6 +228,7 @@ namespace neztu
         std::vector<Vote> votes;
         db.GetVotes(&votes, cgi.getEnvironment().getRemoteUser());
 
+        io << NeztuHeading() << endl;
         io << "<table border=\"1\" style=\"width:100%\"><caption>Your Playlist</caption>" << endl;
         io << "<tr><th></th><th></th><th>Title</th><th>Artist</th><th>Length</th></tr>" << endl;
         unsigned int lastTrackId = 0;
