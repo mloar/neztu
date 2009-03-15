@@ -16,6 +16,7 @@
 #include <signal.h>
 #include <string.h>
 
+#include "config.h"
 #include "Database.h"
 #include "Scheduler.h"
 #include "Player.h"
@@ -59,7 +60,7 @@ void sig_handler(int signal)
 
 int main(int argc, char* argv[])
 {
-    Configuration config("/etc/neztu.conf");
+    Configuration config(SYSCONFDIR "/neztu.conf");
     Database db(config);
     Scheduler scheduler(config, db);
 

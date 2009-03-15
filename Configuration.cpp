@@ -30,7 +30,10 @@ namespace neztu
         std::ifstream file(path.c_str());
         if (!file.is_open())
         {
-            throw std::runtime_error("could not open configuration file");
+            throw std::runtime_error(
+                std::string("could not open configuration file")
+                + path
+                );
         }
 
         while (file.good())
