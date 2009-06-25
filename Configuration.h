@@ -28,6 +28,7 @@ namespace neztu
         const std::string& GetSchedulingMethod() const;
         const std::string& GetSkipCommand() const;
         const std::string& GetApplicationDirectory() const;
+        const std::string& GetMusicBaseDirectory() const;
     };
 }
 

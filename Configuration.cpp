@@ -26,6 +26,7 @@ namespace neztu
         m_config.insert(std::make_pair("scheduler", ""));
         m_config.insert(std::make_pair("skipCommand", ""));
         m_config.insert(std::make_pair("applicationDir", ""));
+        m_config.insert(std::make_pair("musicBaseDir", ""));
 
         std::ifstream file(path.c_str());
         if (!file.is_open())
@@ -103,5 +104,10 @@ namespace neztu
     const std::string& Configuration::GetApplicationDirectory() const
     {
         return m_config.find("applicationDir")->second;
+    }
+
+    const std::string& Configuration::GetMusicBaseDirectory() const
+    {
+        return m_config.find("musicBaseDir")->second;
     }
 }

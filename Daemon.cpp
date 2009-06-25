@@ -16,7 +16,6 @@
 #include <signal.h>
 #include <string.h>
 
-#include "config.h"
 #include "Database.h"
 #include "Scheduler.h"
 #include "Player.h"

@@ -21,12 +21,25 @@
 #include "Database.h"
 #include "Dispatcher.h"
 #include "Scheduler.h"
+#include "TagReader.h"
 
 using namespace cgicc;
 using namespace std;
 
 namespace neztu
 {
+    std::string GetUserName(Cgicc &cgi)
+    {
+        std::string ret = cgi.getEnvironment().getRemoteUser();
+
+        if (ret.find('@') != std::string::npos)
+        {
+            ret.erase(ret.find('@'));
+        }
+
+        return ret;
+    }
+
     class NeztuHeading : public cgicc::MStreamable
     {
     public:
@@ -154,7 +167,7 @@ namespace neztu
             std::stringstream str(cgi["trackId"]->getValue());
             str >> trackId;
 
-            db.AddVote(cgi.getEnvironment().getRemoteUser(), trackId);
+            db.AddVote(GetUserName(cgi), trackId);
         }
 
         io << "Status: 204 No Content\r\n\r\n";
@@ -163,7 +176,7 @@ namespace neztu
     void skip_handler(Request &req)
     {
         Vote v = req.db.GetCurrent();
-        if (v.UserName == "neztu" || v.UserName == req.cgi.getEnvironment().getRemoteUser())
+        if (v.UserName == "neztu" || v.UserName == GetUserName(req.cgi))
         {
             system(req.config.GetSkipCommand().c_str());
             req.io << "Status: 204 No Content\r\n\r\n";
@@ -208,7 +221,7 @@ namespace neztu
                 unsigned int trackId1, trackId2;
                 trackIdStr1 >> trackId1;
                 trackIdStr2 >> trackId2;
-                db.SwapVotes(cgi.getEnvironment().getRemoteUser(), trackId1, trackId2);
+                db.SwapVotes(GetUserName(cgi), trackId1, trackId2);
             }
         }
 
@@ -221,12 +234,12 @@ namespace neztu
                 std::stringstream str(track1->getValue());
                 unsigned int trackId;
                 str >> trackId;
-                db.RemoveVote(cgi.getEnvironment().getRemoteUser(), trackId);
+                db.RemoveVote(GetUserName(cgi), trackId);
             }
         }
 
         std::vector<Vote> votes;
-        db.GetVotes(&votes, cgi.getEnvironment().getRemoteUser());
+        db.GetVotes(&votes, GetUserName(cgi));
 
         io << NeztuHeading() << endl;
         io << "<table border=\"1\" style=\"width:100%\"><caption>Your Playlist</caption>" << endl;
@@ -252,6 +265,34 @@ namespace neztu
         }
         io << "</table>" << endl;
 
+        io << NeztuFooter();
+    }
+
+    void add_handler(Request &req)
+    {
+        FCgiIO &io = req.io;
+        Cgicc &cgi = req.cgi;
+        Database &db = req.db;
+
+        io << NeztuHeading() << endl;
+
+        cgicc::form_iterator mydir = cgi["mydir"];
+        if (mydir != cgi.getElements().end() && mydir->getValue() == "Index")
+        {
+            io << "Results:";
+            io << "<pre>";
+            TagReader::ProcessPath(
+                db,
+                req.config.GetMusicBaseDirectory() + "/" + GetUserName(cgi),
+                io
+                );
+            io << "</pre>";
+        }
+
+        io << "<form method=\"POST\">";
+        io << req.config.GetMusicBaseDirectory() + "/" + GetUserName(cgi);
+        io << "<input type=\"submit\" name=\"mydir\" value=\"Index\">";
+        io << "</form>";
         io << NeztuFooter();
     }
 
@@ -378,6 +419,7 @@ namespace neztu
         m_config(config),
         m_db(config)
     {
+        m_paths.insert(std::make_pair("/add", add_handler));
         m_paths.insert(std::make_pair("/vote", vote_handler));
         m_paths.insert(std::make_pair("/skip", skip_handler));
         m_paths.insert(std::make_pair("/playlist", playlist_handler));

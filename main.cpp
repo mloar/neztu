@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <cgicc/Cgicc.h>
 
-#include "config.h"
 #include "FCgiIO.h"
 #include "Configuration.h"
 #include "Database.h"
