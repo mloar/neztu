@@ -26,6 +26,9 @@ int main(int argc, char* argv[])
         sleep(2);
     }
 
+    // Make sure we're using UTC.
+    setenv("TZ", "", 1);
+
     if (FCGX_Init())
     {
         fprintf(stderr, "FCGX_Init() failed\n");

@@ -34,7 +34,7 @@ function updateNowPlaying() {
       }
 
       if (x.responseText.length == 0) {
-        // Failed - try again 10 minutes later
+        // Failed - try again 10 seconds later
         setTimeout(updateNowPlaying, 10000);
       }
       var queue = x.responseText.substr(0, x.responseText.indexOf("</table>\n"));
